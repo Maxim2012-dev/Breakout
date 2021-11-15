@@ -33,10 +33,10 @@ start:
 	; 1 pixel op scherm = 1 byte in videogeheugen
 	; videogeheugen ---> 0A0000h ---> array van bytes/pixels
 	
-	mov edi, 0A0000h
+	mov edi, VIDMEMADR
 	mov al, 15
 	mov [edi], al
-	add edi, 2*320+10
+	add edi, 2*SCRWIDTH+10
 	mov [edi], al
 	
 	; Procedure om bal te tekenen
