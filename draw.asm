@@ -9,6 +9,9 @@
 ; 	 Want bij ons pp1 stelde ik een cel in mijn spellogica voor als bv. 20x20 pixels en aangezien al mijn spelelementen dezelfde grootte hadden, namelijk 1 cel was het niet te moeilijk,
 ;    maar we zien hier nog niet goed hoe we aan de slag moeten  
 
+; Mogelijke oplossingen:
+; 5. Ik dacht misschien om hetzelfde te doen en 1 cel voor te stellen als 4x4 pixels
+
 
 IDEAL
 P386
