@@ -21,11 +21,11 @@ start:
 	; 1 pixel op scherm = 1 byte in videogeheugen
 	; videogeheugen ---> 0A0000h ---> array van bytes/pixels
 	
-	mov EDI, 0A0000h
-	mov AL, 15
-	mov [EDI], AL
-	add EDI, 2*320+10
-	mov [EDI], AL
+	mov edi, 0A0000h
+	mov al, 15
+	mov [edi], al
+	add edi, 2*320+10
+	mov [edi], al
 	
 	; Procedure om bal te tekenen
 	; twee argumenten in de vorm van een y-waarde en x-waarde
