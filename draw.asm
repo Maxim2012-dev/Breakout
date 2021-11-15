@@ -5,7 +5,9 @@
 ; 2. Hoe kunnen we een afbeelding kopiëren naar onze scherm, bestaat daar een instructie voor?
 ; 3. Mag de collision-check tussen de verschillende spelelementen gebeuren a.d.h.v. de bitmaps en zo controleren of er pixels overlappen, is moeilijk of valt het mee?
 ; 4. Waar kunnen we het standaard kleurenpalet terugvinden, zodat we weten welke index met welke kleur overeenkomt?
-; 5. 
+; 5. Hoe moeten we ons spellogica en tekenlogica van mekaar scheiden? 
+; 	 Want bij ons pp1 stelde ik een cel in mijn spellogica voor als bv. 20x20 pixels en aangezien al mijn spelelementen dezelfde grootte hadden, namelijk 1 cel was het niet te moeilijk,
+;    maar we zien hier nog niet goed hoe we aan de slag moeten  
 
 
 IDEAL
