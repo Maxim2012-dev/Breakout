@@ -1,6 +1,7 @@
 ; Vragen voor assistent:
 
-; 1. Moeten we onze code opdelen in verschillende bestanden? Want we hebben eigenlijk toch nog niet gezien hoe je procedure/macro's moet providen en importeren.
+; 1. Moeten we onze code opdelen in verschillende bestanden of is het oké als we dit goed organiseren in één bestand, zoals u het doet voor de WPO-oefeninge? 
+;    Want we hebben eigenlijk toch nog niet gezien hoe je procedure/macro's moet providen en importeren.
 ; 2. Hoe kunnen we een afbeelding kopiëren naar onze scherm, bestaat daar een instructie voor?
 ; 3. Mag de collision-check tussen de verschillende spelelementen gebeuren a.d.h.v. de bitmaps en zo controleren of een pixel meermaals voorkomt, is moeilijk of valt het mee?
 
@@ -9,6 +10,11 @@ IDEAL
 P386
 MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
+
+; constants a.d.h.v. macro's
+VIDMEMADR EQU 0A0000h	; videogeheugenadres
+SCRWIDTH EQU 320		; schermbreedte
+SCRHEIGHT EQU 200		; schermhoogte
 
 ; -------------------------------------------------------------------
 ; CODE
