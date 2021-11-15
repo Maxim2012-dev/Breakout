@@ -4,6 +4,8 @@
 ;    Want we hebben eigenlijk toch nog niet gezien hoe je procedure/macro's moet providen en importeren.
 ; 2. Hoe kunnen we een afbeelding kopiëren naar onze scherm, bestaat daar een instructie voor?
 ; 3. Mag de collision-check tussen de verschillende spelelementen gebeuren a.d.h.v. de bitmaps en zo controleren of er pixels overlappen, is moeilijk of valt het mee?
+; 4. Waar kunnen we het standaard kleurenpalet terugvinden, zodat we weten welke index met welke kleur overeenkomt?
+; 5. 
 
 
 IDEAL
