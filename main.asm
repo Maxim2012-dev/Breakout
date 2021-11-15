@@ -3,9 +3,9 @@
 ; 32-bit x86 assembly language
 ; TASM
 ;
-; auteurs:		Fernandes Medeiros Alexandre,
-;				Lino Brabants Maxim
-; programma:	Breakout
+; authors:	Fernandes Medeiros Alexandre,
+;			Lino Brabants Maxim
+; program:	Breakout
 ; -------------------------------------------------------------------
 
 IDEAL
@@ -21,21 +21,7 @@ CODESEG
 start:
      sti            
      cld            
-
-	; Video mode 13h instellen (320x200 pixels)
-	mov ah, 0
-	mov al, 13h
-	int 10h
-	
-	; 1 pixel op scherm = 1 byte in videogeheugen
-	; videogeheugen ---> 0A0000h ---> array van bytes/pixels
-	
-	mov EDI, 0A0000h
-	mov AL, 15
-	mov [EDI], AL
-	add EDI, 2*320+10
-	mov [EDI], AL
-	
+	  
 
 ; -------------------------------------------------------------------
 ; DATA
