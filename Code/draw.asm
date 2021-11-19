@@ -10,7 +10,12 @@
 ;    maar we zien hier nog niet goed hoe we aan de slag moeten  
 
 ; Mogelijke oplossingen:
+; 1. het moet niet, maar moet wel georganiseerd zijn 
+; 2. C code omvormen naar binary file
+; 3. we zullen het a.d.h.v. cellen checken
+; 4. zie compendium
 ; 5. Ik dacht misschien om hetzelfde te doen en 1 cel voor te stellen als 4x4 pixels
+
 
 ; Gebruikte kleuren voor sprites:
 ;
