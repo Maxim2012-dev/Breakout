@@ -19,16 +19,16 @@
 
 ; Gebruikte kleuren voor sprites:
 ;
-; BALL: (255, 255, 255) wordt (63, 63, 63) DENK AAN OMWISSELING
+; BALL: (255, 255, 255) wordt (63, 63, 63) DENK AAN OMWISSELING => index 15
 ;
-; PADDLE: (21, 63, 63)
+; PADDLE: (21, 63, 63) => index 11
 ;
 ; RECTANGLES:
 ;
-; blauw = (0, 0, 63)
-; rood = (63, 0, 0)
-; groen = (0, 63, 0)
-; geel = (63, 63, 0)
+; blauw = (0, 0, 63) => index 32
+; rood = (63, 0, 0) => index 40
+; groen = (0, 63, 0) => index 48
+; geel = (63, 63, 0) => index 44
 
 
 IDEAL
@@ -46,43 +46,58 @@ SCRHEIGHT EQU 200		; schermhoogte
 ; -------------------------------------------------------------------
 CODESEG
 
-start:
-     sti            
-     cld            
+; video mode aanpassen
+PROC setVideoMode
+	ARG 	@@VM:byte
+	USES 	eax
 
-	; Video mode 13h instellen (320x200 pixels)
-	mov ah, 0
-	mov al, 13h
+	movzx ax,[@@VM]
 	int 10h
+
+	ret
+ENDP setVideoMode
+
+; programma beïndigen
+PROC terminateProcess
+	USES eax
+	call setVideoMode, 03h
+	mov	ax,04C00h
+	int 21h
+	ret
+ENDP terminateProcess
+
+PROC wait_VBLANK
+
+...
+
+ENDP wait_VBLANK
+
+PROC openFile
+
+...
+
+ENDP openFile
+
+PROC closeFile
+
+...
+
+ENDP closeFile
+
+PROC readChunk
+
+...
+
+ENDP readChunk
+
+PROC main
+	sti            
+    cld            
+
+	call setVideoMode, 13h
+	... 
 	
-	; 1 pixel op scherm = 1 byte in videogeheugen
-	; videogeheugen ---> 0A0000h ---> array van bytes/pixels
-	
-	mov edi, VIDMEMADR
-	mov al, 15
-	mov [edi], al
-	add edi, 2*SCRWIDTH+10
-	mov [edi], al
-	
-	; Procedure om bal te tekenen
-	; twee argumenten in de vorm van een y-waarde en x-waarde
-	; ===>	add EDI, y_val * 320 + x_val
-	PROC drawBall
-	  ARG @@y_val:word, @@x_val:word
-	  USES ebx, ecx, edx
-	  
-	  ...
-	  
-	ENDP drawBall
-	  
-	; Procedure om peddel te tekenen  
-	PROC drawPaddle
-	  ARG @@y_val:word, @@x_val:word
-	  USES ebx, ecx, edx
-	  
-	  ...
-	  
-	ENDP drawPaddle
+ENDP main
 	  
 
 ; -------------------------------------------------------------------
@@ -95,4 +110,4 @@ DATASEG
 ; -------------------------------------------------------------------
 STACK 100h
 
-END start
+END main
