@@ -118,7 +118,7 @@ PROC main
 	 call setVideoMode, 13h
 	 call __keyb_installKeyboardHandler
 	 
-	 mov EDI, 0A0000h
+	 mov edi, VIDMEMADR
 	 
 	 ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	 ; Vervolgens in de spellus gaan.
