@@ -19,16 +19,16 @@
 
 ; Gebruikte kleuren voor sprites:
 ;
-; BALL: (255, 255, 255)
+; BALL: (255, 255, 255) wordt (63, 63, 63) DENK AAN OMWISSELING
 ;
-; PADDLE: (7, 177, 238) 
+; PADDLE: (21, 63, 63)
 ;
 ; RECTANGLES:
 ;
-; lichtere blauw = (12, 61, 178), donkerdere blauw = (5, 32, 96)
-; lichtere rood = (154, 6, 32), donkerdere rood = (99, 7, 24)
-; lichtere groen = (10, 111, 3), donkerdere groen = (6, 67, 2)
-; lichtere oranje = (191, 112, 6), donkerdere oranje = (141, 84, 7)
+; blauw = (0, 0, 63)
+; rood = (63, 0, 0)
+; groen = (0, 63, 0)
+; geel = (63, 63, 0)
 
 
 IDEAL
