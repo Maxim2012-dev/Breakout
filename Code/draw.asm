@@ -1,3 +1,13 @@
+; -------------------------------------------------------------------
+; 80386
+; 32-bit x86 assembly language
+; TASM
+;
+; author:	Maxim Brabants, Alexandre Fernandes Medeiros
+; date:		
+; program:	Breakout game
+; -------------------------------------------------------------------
+
 IDEAL
 P386
 MODEL FLAT, C
