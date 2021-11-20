@@ -1,36 +1,3 @@
-; Vragen voor assistent:
-
-; 1. Moeten we onze code opdelen in verschillende bestanden of is het oké als we dit goed organiseren in één bestand, zoals u het doet voor de WPO-oefeninge? 
-;    Want we hebben eigenlijk toch nog niet gezien hoe je procedure/macro's moet providen en importeren.
-; 2. Hoe kunnen we een afbeelding kopiëren naar onze scherm, bestaat daar een instructie voor?
-; 3. Mag de collision-check tussen de verschillende spelelementen gebeuren a.d.h.v. de bitmaps en zo controleren of er pixels overlappen, is moeilijk of valt het mee?
-; 4. Waar kunnen we het standaard kleurenpalet terugvinden, zodat we weten welke index met welke kleur overeenkomt?
-; 5. Hoe moeten we ons spellogica en tekenlogica van mekaar scheiden? 
-; 	 Want bij ons pp1 stelde ik een cel in mijn spellogica voor als bv. 20x20 pixels en aangezien al mijn spelelementen dezelfde grootte hadden, namelijk 1 cel was het niet te moeilijk,
-;    maar we zien hier nog niet goed hoe we aan de slag moeten  
-
-; Mogelijke oplossingen:
-; 1. het moet niet, maar moet wel georganiseerd zijn 
-; 2. C code omvormen naar binary file
-; 3. we zullen het a.d.h.v. cellen checken
-; 4. zie compendium
-; 5. Ik dacht misschien om hetzelfde te doen en 1 cel voor te stellen als 4x4 pixels
-
-
-; Gebruikte kleuren voor sprites:
-;
-; BALL: (255, 255, 255) wordt (63, 63, 63) DENK AAN OMWISSELING => index 15
-;
-; PADDLE: (21, 63, 63) => index 11
-;
-; RECTANGLES:
-;
-; blauw = (0, 0, 63) => index 32
-; rood = (63, 0, 0) => index 40
-; groen = (0, 63, 0) => index 48
-; geel = (63, 63, 0) => index 44
-
-
 IDEAL
 P386
 MODEL FLAT, C
@@ -40,6 +7,8 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 VIDMEMADR EQU 0A0000h	; videogeheugenadres
 SCRWIDTH EQU 320		; schermbreedte
 SCRHEIGHT EQU 200		; schermhoogte
+
+; EVENTUEEL NOG MACRO'S, ZIE DANCER BESTAND
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -73,15 +42,51 @@ PROC wait_VBLANK
 ENDP wait_VBLANK
 
 PROC openFile
+	ARG		@@FILE:byte, @@FILEHANDLE:word ; @@FILE ==> pointer naar nodige bestand, @@FILEHANDLE ==> pointer naar cursor voor nodige bestand, zie bijhorende offset in datasegment
+	USES eax, ebx, ecx, edx
+	mov al, 0 ; read only
+	mov edx, [@@FILE] ; pointer naar bestand in edx stoppen, register gebruikt voor I/O operaties
+	mov ah, 3dh ; mode om een bestand te openen
+	int 21
+	
+	jnc @@no_error ; carry flag is set if error occurs, indien de CF dus niet geactieveerd is, is er geen error en springt men naar de no_error label
 
-...
-
+	; Print string.
+	call setVideoMode, 03h ; plaatst mode weer in text mode 
+	mov  ah, 09h ; om een string te kunnen printen
+	mov  edx, offset openErrorMsg ; string die geprint moet worden
+	int  21h
+	
+	; VRAAG: ZIJN DE VOLGENDE TWEE LIJNEN CODE NODIG EN ZO JA, WAAROM?
+	;mov	 ah, 00h
+	;int	 16h
+	call terminateProcess ; proces beïndigen aangezien er een error was
+	
+@@no_error:
+	mov [[@@FILEHANDLE]], ax ; INT 21 (AH=3Dh) zal in AX de file handle teruggeven
+	ret
 ENDP openFile
 
 PROC closeFile
+	ARG		@@FILEHANDLE:word
+	USES eax, ebx, edx
+	mov bx, [[@@FILEHANDLE]]
+	mov ah, 3Eh ; mode om een bestand te sluiten
+	int 21h
+	
+	jnc @@no_error ; carry flag is set if error occurs
 
-...
-
+	call setVideoMode, 03h
+	mov  ah, 09h
+	mov  edx, offset closeErrorMsg
+	int  21h
+	
+	;mov	ah,00h
+	;int	16h
+	call terminateProcess
+	
+@@no_error:
+	ret
 ENDP closeFile
 
 PROC readChunk
@@ -104,6 +109,10 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
+	openErrorMsg db "could not open file", 13, 10, '$'
+	closeErrorMsg db "error during file closing", 13, 10, '$'
+	
+UDATASEG
 
 ; -------------------------------------------------------------------
 ; STACK
