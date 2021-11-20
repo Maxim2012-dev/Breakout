@@ -47,7 +47,7 @@ PROC openFile
 	ARG		@@FILE:byte, @@FILEHANDLE:word ; @@FILE ==> pointer naar nodige bestand, @@FILEHANDLE ==> pointer naar cursor voor nodige bestand, zie bijhorende offset in datasegment
 	USES eax, ebx, ecx, edx
 	mov al, 0 ; read only
-	mov edx, [@@FILE] ; pointer naar bestand in edx stoppen, register gebruikt voor I/O operaties
+	mov edx, [[@@FILE]] ; pointer naar bestand in edx stoppen, register gebruikt voor I/O operaties  (VERBETERING NODIG!!!)
 	mov ah, 3dh ; mode om een bestand te openen
 	int 21
 	
