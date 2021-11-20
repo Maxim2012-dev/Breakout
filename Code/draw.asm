@@ -36,6 +36,8 @@ P386
 MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
+INCLUDE "keyb.inc"		; library custom keyboard handler
+
 ; constants a.d.h.v. macro's
 VIDMEMADR EQU 0A0000h	; videogeheugenadres
 SCRWIDTH EQU 320		; schermbreedte
@@ -94,8 +96,39 @@ PROC main
 	sti            
     cld            
 
-	call setVideoMode, 13h
-	... 
+	 call setVideoMode, 13h
+	 call __keyb_installKeyboardHandler
+	 
+	 mov EDI, 0A0000h
+	 xor ax ax
+	 
+	 ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
+	 ; Vervolgens in de spellus gaan.
+	 
+	 @@gameloop
+		
+		mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
+		cmp al 1
+		je moveRight
+		
+		mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
+		cmp al 1
+		je moveLeft
+		
+		moveRight:
+		; call movePaddleRight
+		mov bl, 15
+		add edi, 2*320+[ax]
+		mov [edi], bl
+		
+		moveLeft:
+		; call movePaddleLeft
+		mov bl, 15
+		add edi, 2*320+[ax]
+		mov [edi], bl
+		
+		
+	 loop @@gameloop
 	
 ENDP main
 	  
