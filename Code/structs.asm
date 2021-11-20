@@ -6,7 +6,7 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 ;; 1 cel wordt voorgesteld als 4 pixels op 4 pixels.
 CELLWIDTH EQU 4		; celbreedte
 CELLHEIGHT EQU 4	; celhoogte
-CELLSIZE EQU 16
+CELLSIZE EQU CELLWIDTH*CELLHEIGHT
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -21,6 +21,8 @@ start:
 ; DATA
 ; -------------------------------------------------------------------
 
+; VRAAG: HOE MAAK JE EEN STRUC INSTANTIE AAN IN ASSEMBLY? 
+
 STRUC position
 	x dw 0		
 	y dw 0		; 1 byte/8 bits zou voldoende zijn, maar bij een schermhoogte groter dan 255 pixels niet meer.
@@ -30,20 +32,22 @@ ENDS position
 STRUC paddle
 	position dd 0	; position struct -> x -en y-coördinaat
 	health db 3
-	sprite dd 0		; pointer naar sprite image
+	width db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT?
+	height db 0
+	sprite dd 0		; pointer naar sprite image, OPMERKING: DIT IS VOLGENS MIJ (ALEXANDRE) NIET NODIG, KLOPT HET? WANT HET WORDT WEL OP SLIDE 10 VAN WPO5 GEBRUIKT, DAARDOOR DAT WE NIET ZEKER ZIJN.
 ENDS paddle
 
 
 STRUC ball
-	position dd 0	; position struct -> x -en y-coördinaat
-	sprite dd 0		; pointer naar sprite image
+	position dd 0
+	sprite dd 0
 ENDS ball
 
 
 STRUC stone
 	index_position db 0		; index in grid
 	color db 0
-	sprite dd 0		; pointer naar sprite image
+	sprite dd 0
 ENDS stone	
 
 DATASEG
