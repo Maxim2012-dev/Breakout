@@ -49,7 +49,7 @@ ENDP terminateProcess
 
 PROC wait_VBLANK
 
-...
+... ; VRAAG: IK BEGRIJP DEZE PROCEDURE UIT HET BESTAND DANCER NIET HELEMAAL EN WEET DUS NIET OF HIER EXACT HETZELFDE MOET GEBEUREN OF NIET (IK HEB HET COMPENDIUM GELEZEN MAAR HEEFT NIET GEHOLPEN) 
 
 ENDP wait_VBLANK
 
@@ -103,7 +103,9 @@ ENDP closeFile
 
 PROC readChunk
 
-...
+... ; VRAAG: IK BEGRIJP NOG NIET HELEMAAL HOE IK TE WERK MOET GAAN OM EEN BESTAND UIT TE LEZEN ALS DEZE DE NODIGE INDEXEN VAN HET KLEURENPALET PER PIXEL BEVAT.
+	;		 AANGEZIEN DEZE PROCEDURE IN HET BESTAND DANCER BLIJKBAAR OOK NIET NODIGE INSTRUCTIES BEVAT EN ER EEN ANDERE PROCEDURE expandPackedFrame BESTAAT DIE BLIJKBAAR ZOWEL NUTTIGE ALS NUTTELOZE DINGEN DOET.
+	;		 IK WEET DUS NIET WAT IK WEL EN NIET NODIG HEB UIT DIE PROCEDURES.
 
 ENDP readChunk
 
@@ -121,42 +123,50 @@ ENDP readChunk
 
 ; ENDP movePaddleRight
 
+PROC gamelogistic
+
+	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
+	cmp al, 1
+	je @@moveRight
+		
+	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
+	cmp al, 1
+	je @@moveLeft
+		
+@@moveRight:
+	; call movePaddleRight
+		
+@@moveLeft:
+	; call movePaddleLeft
+	
+...	
+ 
+ENDP gamelogistic 
+
+PROC drawlogistic
+
+...
+
+ENDP drawlogistic
+
 PROC main
 	sti            
     cld            
 
-	 call setVideoMode, 13h
-	 call __keyb_installKeyboardHandler
+	call setVideoMode, 13h
+	call __keyb_installKeyboardHandler
 	 
-	 mov edi, VIDMEMADR
+	mov edi, VIDMEMADR
 	 
-	 ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
-	 ; Vervolgens in de spellus gaan.
+	; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
+	; Vervolgens in de spellus gaan.
 	 
-	 @@gameloop:
+@@gameloop:
 		
-		mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
-		cmp al, 1
-		je moveRight
+	; call gamelogistic
+	; call drawlogistic
 		
-		mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
-		cmp al, 1
-		je moveLeft
-		
-		moveRight:
-		; call movePaddleRight
-		mov bl, 15
-		add edi, 2*320+10
-		mov [edi], bl
-		
-		moveLeft:
-		; call movePaddleLeft
-		mov bl, 15
-		add edi, 2*320+10
-		mov [edi], bl
-		
-		
-	 loop @@gameloop
+	loop @@gameloop
 	
 ENDP main
 	  
