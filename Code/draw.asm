@@ -65,14 +65,14 @@ PROC openFile
 	call terminateProcess ; proces beïndigen aangezien er een error was
 	
 @@no_error:
-	mov [[@@FILEHANDLE]], ax ; INT 21 (AH=3Dh) zal in AX de file handle teruggeven
+	mov [@@FILEHANDLE], ax ; INT 21 (AH=3Dh) zal in AX de file handle teruggeven
 	ret
 ENDP openFile
 
 PROC closeFile
 	ARG		@@FILEHANDLE:word
 	USES eax, ebx, edx
-	mov bx, [[@@FILEHANDLE]]
+	mov bx, [@@FILEHANDLE]
 	mov ah, 3Eh ; mode om een bestand te sluiten
 	int 21h
 	
@@ -97,6 +97,20 @@ PROC readChunk
 
 ENDP readChunk
 
+;;; Kan generieker gemaakt worden door een algemene move PROC met richting als argument
+
+; PROC movePaddleLeft
+
+; ...
+
+; ENDP movePaddleLeft
+
+; PROC movePaddleRight
+
+; ...
+
+; ENDP movePaddleRight
+
 PROC main
 	sti            
     cld            
@@ -105,31 +119,30 @@ PROC main
 	 call __keyb_installKeyboardHandler
 	 
 	 mov EDI, 0A0000h
-	 xor ax ax
 	 
 	 ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	 ; Vervolgens in de spellus gaan.
 	 
-	 @@gameloop
+	 @@gameloop:
 		
 		mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
-		cmp al 1
+		cmp al, 1
 		je moveRight
 		
 		mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
-		cmp al 1
+		cmp al, 1
 		je moveLeft
 		
 		moveRight:
 		; call movePaddleRight
 		mov bl, 15
-		add edi, 2*320+[ax]
+		add edi, 2*320+10
 		mov [edi], bl
 		
 		moveLeft:
 		; call movePaddleLeft
 		mov bl, 15
-		add edi, 2*320+[ax]
+		add edi, 2*320+10
 		mov [edi], bl
 		
 		
