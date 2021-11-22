@@ -109,19 +109,6 @@ PROC readChunk
 
 ENDP readChunk
 
-;;; Kan generieker gemaakt worden door een algemene move PROC met richting als argument
-
-; PROC movePaddleLeft
-
-; ...
-
-; ENDP movePaddleLeft
-
-; PROC movePaddleRight
-
-; ...
-
-; ENDP movePaddleRight
 
 PROC gamelogistic
 
@@ -160,8 +147,10 @@ PROC main
 	 
 	; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; Vervolgens in de spellus gaan.
+	
+	
 	 
-@@gameloop:
+	@@gameloop:
 		
 	; call gamelogistic
 	; call drawlogistic
