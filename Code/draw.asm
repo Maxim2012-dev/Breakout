@@ -120,19 +120,29 @@ PROC gamelogistic
 	cmp al, 1
 	je @@moveLeft
 		
-@@moveRight:
-	; call movePaddleRight
+	@@moveRight:
+		; call movePaddleRight
 		
-@@moveLeft:
-	; call movePaddleLeft
+	@@moveLeft:
+		; call movePaddleLeft
 	
 ...	
  
 ENDP gamelogistic 
 
+PROC drawBall
+	
+	mov edi, 0A0000h
+	mov ecx,     ; ECX --> breedte van sprite
+	mov eax, offset packedframe_ball
+	
+	start:
+	
+	
+ENDP drawBall
+
 PROC drawlogistic
 
-...
 
 ENDP drawlogistic
 
@@ -164,11 +174,14 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
-	openErrorMsg db "could not open file", 13, 10, '$'
-	closeErrorMsg db "error during file closing", 13, 10, '$'
+	ball_sprite 	db "ball.bin", 0
+	gblock_sprite 	db "green_rectangle.bin", 0
+	openErrorMsg 	db "could not open file", 13, 10, '$'
+	closeErrorMsg 	db "error during file closing", 13, 10, '$'
 	
 UDATASEG
-
+	filehandle dw ?
+	packedframe_ball db FRAMESIZE dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
