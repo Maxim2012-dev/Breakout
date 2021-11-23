@@ -30,24 +30,24 @@ ENDS position
 
 	
 STRUC paddle
-	position dd 0	; position struct -> x -en y-coördinaat
-	health db 3
-	width db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT?
-	height db 0
-	sprite dd 0		; pointer naar sprite image, OPMERKING: DIT IS VOLGENS MIJ (ALEXANDRE) NIET NODIG, KLOPT HET? WANT HET WORDT WEL OP SLIDE 10 VAN WPO5 GEBRUIKT, DAARDOOR DAT WE NIET ZEKER ZIJN.
+	position 	dd 0	; position struct -> x -en y-coördinaat
+	health 		db 3
+	width 		db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT?
+	height 		db 0
+	sprite 		dd 0		; pointer naar byte array (sprite)
 ENDS paddle
 
 
 STRUC ball
-	position dd 0
-	sprite dd 0
+	position 	dd 0
+	sprite 		dd 0
 ENDS ball
 
 
 STRUC stone
-	index_position db 0		; index in grid
-	color db 0
-	sprite dd 0
+	index_position 	db 0		; index in grid
+	color 			db 0
+	sprite 			dd 0
 ENDS stone	
 
 DATASEG

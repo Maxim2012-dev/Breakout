@@ -14,6 +14,7 @@ MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "keyb.inc"		; library custom keyboard handler
+INCLUDE "structs.asm"
 
 ; constants a.d.h.v. macro's
 VIDMEMADR EQU 0A0000h	; videogeheugenadres
@@ -102,10 +103,27 @@ PROC closeFile
 ENDP closeFile
 
 PROC readChunk
+	ARG		@@FILEHANDLE:word
+	USES eax, ebx, ecx, edx
+	mov bx, [filehandle]
+	mov cx, FRAMESIZE
+	mov edx, offset packedframe
+	mov ah, 3fh								
+	int 21h
+	
+	jnc @@no_error  	
 
-... ; VRAAG: IK BEGRIJP NOG NIET HELEMAAL HOE IK TE WERK MOET GAAN OM EEN BESTAND UIT TE LEZEN ALS DEZE DE NODIGE INDEXEN VAN HET KLEURENPALET PER PIXEL BEVAT.
-	;		 AANGEZIEN DEZE PROCEDURE IN HET BESTAND DANCER BLIJKBAAR OOK NIET NODIGE INSTRUCTIES BEVAT EN ER EEN ANDERE PROCEDURE expandPackedFrame BESTAAT DIE BLIJKBAAR ZOWEL NUTTIGE ALS NUTTELOZE DINGEN DOET.
-	;		 IK WEET DUS NIET WAT IK WEL EN NIET NODIG HEB UIT DIE PROCEDURES.
+	call setVideoMode, 03h
+	mov  ah, 09h
+	mov  edx, offset readErrorMsg
+	int  21h
+	
+	mov	ah,00h
+	int	16h
+	call terminateProcess
+	
+@@no_error:
+	ret
 
 ENDP readChunk
 
@@ -125,24 +143,45 @@ PROC gamelogistic
 		
 	@@moveLeft:
 		; call movePaddleLeft
-	
-...	
- 
+
 ENDP gamelogistic 
+
+; Generische tekenprocedure die struct verwacht
+; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
+PROC drawObject
+	ARG 	@@STRUCT:byte
+	mov ebx, [@@STRUCT]
+	mov edi, VIDMEMADR
+	mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite
+	mov eax, [ecx] + 1			 			; eax --> hoogte van sprite
+	mov al, [ecx] + 2
+		
+	; voor alle rijen in sprite	
+	row_loop:
+		; bytes van huidige rij in sprite kopiëren naar videogeheugen
+		copy_loop:
+			stosb					; [edi] vullen met al
+			inc al
+			loop copy_loop
+		
+		mov ecx, [ebx + [@@STRUCT].sprite]		; ecx opnieuw initialiseren met breedte sprite
+		add edi, 320 - [ecx]					; naar volgende rij gaan in videogeheugen
+		dec eax
+		test eax, eax
+		jnz row_loop
+
+ENDP drawObject
 
 PROC drawBall
 	
-	mov edi, 0A0000h
-	mov ecx,     ; ECX --> breedte van sprite
-	mov eax, offset packedframe_ball
-	
-	start:
-	
+	call drawObject, ; STRUC ball		; Hier moet een ball structure worden meegegeven
 	
 ENDP drawBall
 
-PROC drawlogistic
 
+PROC drawlogistic
+	
+	call drawBall, 
 
 ENDP drawlogistic
 
@@ -153,12 +192,8 @@ PROC main
 	call setVideoMode, 13h
 	call __keyb_installKeyboardHandler
 	 
-	mov edi, VIDMEMADR
-	 
 	; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; Vervolgens in de spellus gaan.
-	
-	
 	 
 	@@gameloop:
 		
@@ -174,14 +209,15 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
-	ball_sprite 	db "ball.bin", 0
-	gblock_sprite 	db "green_rectangle.bin", 0
+	ball_struct 	ball < position <150, 100>, ball_sprite >
+	ball_file 		db "ball.bin", 0
+	gblock_file 	db "green_rectangle.bin", 0
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
 	
 UDATASEG
 	filehandle dw ?
-	packedframe_ball db FRAMESIZE dup (?)
+	ball_sprite db FRAMESIZE dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
