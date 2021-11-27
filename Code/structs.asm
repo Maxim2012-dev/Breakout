@@ -21,8 +21,6 @@ start:
 ; DATA
 ; -------------------------------------------------------------------
 
-; VRAAG: HOE MAAK JE EEN STRUC INSTANTIE AAN IN ASSEMBLY? 
-
 STRUC position
 	x dw 0		
 	y dw 0		; 1 byte/8 bits zou voldoende zijn, maar bij een schermhoogte groter dan 255 pixels niet meer.
@@ -32,7 +30,7 @@ ENDS position
 STRUC paddle
 	position dd 0	; position struct -> x -en y-coördinaat
 	health db 3
-	width db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT?
+	width db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT? JA
 	height db 0
 	sprite dd 0		; pointer naar sprite image, OPMERKING: DIT IS VOLGENS MIJ (ALEXANDRE) NIET NODIG, KLOPT HET? WANT HET WORDT WEL OP SLIDE 10 VAN WPO5 GEBRUIKT, DAARDOOR DAT WE NIET ZEKER ZIJN.
 ENDS paddle
@@ -51,6 +49,11 @@ STRUC stone
 ENDS stone	
 
 DATASEG
+
+; INSTANTIES VAN STRUCTS MAKEN
+
+x postion 10 dup < 1, 2 > ; een lijst van 10 position structs
+y position < , > ; een position struct met de 
 
 ; -------------------------------------------------------------------
 ; STACK
