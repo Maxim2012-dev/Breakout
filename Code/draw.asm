@@ -108,8 +108,8 @@ PROC closeFile
 	mov  edx, offset closeErrorMsg
 	int  21h
 	
-	;mov	ah,00h
-	;int	16h
+	mov	ah,00h
+	int	16h
 	call terminateProcess
 	
 @@no_error:
@@ -168,9 +168,10 @@ ENDP gamelogistic
 ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
 	ARG 	@@STRUCT:byte
+	USES ; OPMERKING_A: VERGETEN VERMELDEN
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite
+	mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite, OPMERKING_A: VOLGENS MIJ WERKT DIT NIET ZO, ZIE WPO5 SLIDE 10
 	mov eax, [ecx] + 1			 			; eax --> hoogte van sprite
 	mov al, [ecx] + 2
 		
@@ -190,7 +191,7 @@ PROC drawObject
 
 ENDP drawObject
 
-PROC drawBall
+PROC drawBall ; OPMERKING_A: IS MISSCHIEN NIET NODIG EN KAN MEN RECHTSTREEKS OPROEPEN IN DRAWLOGISTIC
 	
 	call drawObject, ; STRUC ball		; Hier moet een ball structure worden meegegeven
 	
@@ -228,8 +229,8 @@ ENDP main
 ; -------------------------------------------------------------------
 DATASEG
 	ball_struct 	ball < position <150, 100>, ball_sprite >
-	ball_file 		db "ball.bin", 0
-	gblock_file 	db "green_rectangle.bin", 0
+	ball_file 		db "ball", 0
+	gblock_file 	db "greenstone", 0
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
 	
