@@ -66,7 +66,7 @@ PROC wait_VBLANK
 ENDP wait_VBLANK
 
 PROC openFile ; de offset van een variabele neemt 32 bits in beslag
-	ARG	@@FILE:dword, @@FILEHANDLE:dword ; @@FILE ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG, @@FILEHANDLE ==> adres van cursor naar nodige bestand in UDATASEG
+	ARG	@@FILE:dword ; @@FILE ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
 	USES eax, ebx, ecx, edx
 	mov al, 0 ; read only
 	mov edx, [@@FILE] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
@@ -87,16 +87,13 @@ PROC openFile ; de offset van een variabele neemt 32 bits in beslag
 	call terminateProcess ; proces beïndigen aangezien er een error was
 	
 @@no_error:
-	mov ebx, [@@FILEHANDLE] ; ik maak gebruik van deze tussenstap, aangezien [[@@FILEHANDLE]] niet mag
-	mov [ebx], ax ; INT 21 (AH=3Dh) zal in AX de filehandle teruggeven
+	mov [filehandle], ax ; INT 21 (AH=3Dh) zal in AX de filehandle teruggeven, variabele "filehandle" herbruiken voor de verschillende bestanden 
 	ret
 ENDP openFile
 
 PROC closeFile
-	ARG	@@FILEHANDLE:dword
-	USES eax, ebx, edx
-	mov ebx, [@@FILEHANDLE]
-	mov bx, [ebx]
+	USES eax, ebx, edx ; VRAAG: REGISTER ECX TOCH NIET NODIG? (WANT DEZE WORDT GEPRESERVED IN DANCER)
+	mov bx, [filehandle]
 	mov ah, 3Eh ; mode om een bestand te sluiten
 	int 21h
 	
@@ -116,10 +113,9 @@ PROC closeFile
 ENDP closeFile
 
 PROC readChunk
-	ARG	@@FILEHANDLE:dword, @@SPRITE_SIZE:word, @@ARRAY_BYTES:dword ; @@SPRITE_SIZE ==> getal die overeenkomt met aantal pixels van sprite, @@ARRAY_BYTES ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
+	ARG @@SPRITE_SIZE:word, @@ARRAY_BYTES:dword ; @@SPRITE_SIZE ==> getal die overeenkomt met aantal pixels van sprite, @@ARRAY_BYTES ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
 	USES eax, ebx, ecx, edx
-	mov ebx, [@@FILEHANDLE]
-	mov bx, [ebx]
+	mov bx, [filehandle]
 	mov cx, [@@SPRITE_SIZE]
 	mov edx, [@@ARRAY_BYTES] 
 	mov ah, 3fh								
@@ -141,63 +137,63 @@ PROC readChunk
 ENDP readChunk
 
 
-PROC gamelogistic
+; PROC gamelogistic
 
-	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
-	cmp al, 1
-	je @@moveRight
+	; mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
+	; cmp al, 1
+	; je @@moveRight
 		
-	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
-	cmp al, 1
-	je @@moveLeft
+	; mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
+	; cmp al, 1
+	; je @@moveLeft
 		
-	@@moveRight:
-		; call movePaddleRight
+	; @@moveRight:
+		; ; call movePaddleRight
 		
-	@@moveLeft:
-		; call movePaddleLeft
+	; @@moveLeft:
+		; ; call movePaddleLeft
 
-ENDP gamelogistic 
+; ENDP gamelogistic 
 
-; Generische tekenprocedure die struct verwacht
-; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
-PROC drawObject
-	ARG 	@@STRUCT:byte
-	USES ; OPMERKING_A: VERGETEN VERMELDEN
-	mov ebx, [@@STRUCT]
-	mov edi, VIDMEMADR
-	mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite, OPMERKING_A: VOLGENS MIJ WERKT DIT NIET ZO, ZIE WPO5 SLIDE 10
-	mov eax, [ecx] + 1			 			; eax --> hoogte van sprite
-	mov al, [ecx] + 2
+; ; Generische tekenprocedure die struct verwacht
+; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
+; PROC drawObject
+	; ARG 	@@STRUCT:byte
+	; USES ; OPMERKING_A: VERGETEN VERMELDEN
+	; mov ebx, [@@STRUCT]
+	; mov edi, VIDMEMADR
+	; mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite, OPMERKING_A: VOLGENS MIJ WERKT DIT NIET ZO, ZIE WPO5 SLIDE 10
+	; mov eax, [ecx] + 1			 			; eax --> hoogte van sprite
+	; mov al, [ecx] + 2
 		
-	; voor alle rijen in sprite	
-	row_loop:
-		; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		copy_loop:
-			stosb					; [edi] vullen met al
-			inc al
-			loop copy_loop
+	; ; voor alle rijen in sprite	
+	; row_loop:
+		; ; bytes van huidige rij in sprite kopiëren naar videogeheugen
+		; copy_loop:
+			; stosb					; [edi] vullen met al
+			; inc al
+			; loop copy_loop
 		
-		mov ecx, [ebx + [@@STRUCT].sprite]		; ecx opnieuw initialiseren met breedte sprite
-		add edi, 320 - [ecx]					; naar volgende rij gaan in videogeheugen
-		dec eax
-		test eax, eax
-		jnz row_loop
+		; mov ecx, [ebx + [@@STRUCT].sprite]		; ecx opnieuw initialiseren met breedte sprite
+		; add edi, 320 - [ecx]					; naar volgende rij gaan in videogeheugen
+		; dec eax
+		; test eax, eax
+		; jnz row_loop
 
-ENDP drawObject
+; ENDP drawObject
 
-PROC drawBall ; OPMERKING_A: IS MISSCHIEN NIET NODIG EN KAN MEN RECHTSTREEKS OPROEPEN IN DRAWLOGISTIC
+; PROC drawBall ; OPMERKING_A: IS MISSCHIEN NIET NODIG EN KAN MEN RECHTSTREEKS OPROEPEN IN DRAWLOGISTIC
 	
-	call drawObject, ; STRUC ball		; Hier moet een ball structure worden meegegeven
+	; call drawObject, ; STRUC ball		; Hier moet een ball structure worden meegegeven
 	
-ENDP drawBall
+; ENDP drawBall
 
 
-PROC drawlogistic
+; PROC drawlogistic
 	
-	call drawBall, 
+	; call drawBall, 
 
-ENDP drawlogistic
+; ENDP drawlogistic
 
 PROC main
 	sti            
