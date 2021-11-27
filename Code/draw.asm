@@ -47,10 +47,24 @@ PROC terminateProcess
 	ret
 ENDP terminateProcess
 
-PROC wait_VBLANK
-
-... ; VRAAG: IK BEGRIJP DEZE PROCEDURE UIT HET BESTAND DANCER NIET HELEMAAL EN WEET DUS NIET OF HIER EXACT HETZELFDE MOET GEBEUREN OF NIET (IK HEB HET COMPENDIUM GELEZEN MAAR HEEFT NIET GEHOLPEN) 
-
+; wait for @@framecount frames
+PROC wait_VBLANK ; CODE NOG AANPASSEN, VBLANK MOET MAAR 1 KEER WACHTEN => PROCEDURE HEEFT GEEN ARGUMENT MEER NODIG, BIJ ONS IS GEEN LOOP NODIG, @@framecount vervangen door 1
+	ARG @@framecount: word
+	USES eax, ecx, edx
+	mov dx, 03dah 					; Wait for screen refresh
+	movzx ecx, [@@framecount]
+	
+@@VBlank_phase1:
+	in al, dx 
+	and al, 8
+	jnz @@VBlank_phase1
+@@VBlank_phase2:
+	in al, dx 
+	and al, 8
+	jz @@VBlank_phase2
+	loop @@VBlank_phase1
+	
+	ret 
 ENDP wait_VBLANK
 
 PROC openFile
@@ -69,9 +83,9 @@ PROC openFile
 	mov  edx, offset openErrorMsg ; string die geprint moet worden
 	int  21h
 	
-	; VRAAG: ZIJN DE VOLGENDE TWEE LIJNEN CODE NODIG EN ZO JA, WAAROM?
-	;mov	 ah, 00h
-	;int	 16h
+	; wacht op het indrukken van een toets en geeft terug welke deze is, maar dat is niet van belang, daar wordt niets mee gedaan
+	mov	 ah, 00h
+	int	 16h
 	call terminateProcess ; proces beïndigen aangezien er een error was
 	
 @@no_error:
@@ -103,9 +117,7 @@ ENDP closeFile
 
 PROC readChunk
 
-... ; VRAAG: IK BEGRIJP NOG NIET HELEMAAL HOE IK TE WERK MOET GAAN OM EEN BESTAND UIT TE LEZEN ALS DEZE DE NODIGE INDEXEN VAN HET KLEURENPALET PER PIXEL BEVAT.
-	;		 AANGEZIEN DEZE PROCEDURE IN HET BESTAND DANCER BLIJKBAAR OOK NIET NODIGE INSTRUCTIES BEVAT EN ER EEN ANDERE PROCEDURE expandPackedFrame BESTAAT DIE BLIJKBAAR ZOWEL NUTTIGE ALS NUTTELOZE DINGEN DOET.
-	;		 IK WEET DUS NIET WAT IK WEL EN NIET NODIG HEB UIT DIE PROCEDURES.
+...
 
 ENDP readChunk
 
