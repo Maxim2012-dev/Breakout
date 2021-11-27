@@ -30,8 +30,8 @@ CODESEG
 
 ; video mode aanpassen
 PROC setVideoMode
-	ARG 	@@VM:byte
-	USES 	eax
+	ARG @@VM:byte
+	USES eax
 
 	movzx ax,[@@VM]
 	int 10h
@@ -49,30 +49,27 @@ PROC terminateProcess
 ENDP terminateProcess
 
 ; wait for @@framecount frames
-PROC wait_VBLANK ; CODE NOG AANPASSEN, VBLANK MOET MAAR 1 KEER WACHTEN => PROCEDURE HEEFT GEEN ARGUMENT MEER NODIG, BIJ ONS IS GEEN LOOP NODIG, @@framecount vervangen door 1
-	ARG @@framecount: word
-	USES eax, ecx, edx
-	mov dx, 03dah 					; Wait for screen refresh
-	movzx ecx, [@@framecount]
+PROC wait_VBLANK
+	USES eax, edx
+	mov dx, 03dah ; Wait for screen refresh
 	
-@@VBlank_phase1:
+@@VBlank_phase1: ; wait for end
 	in al, dx 
 	and al, 8
 	jnz @@VBlank_phase1
-@@VBlank_phase2:
+@@VBlank_phase2: ; wait for begin
 	in al, dx 
 	and al, 8
 	jz @@VBlank_phase2
-	loop @@VBlank_phase1
 	
 	ret 
 ENDP wait_VBLANK
 
-PROC openFile
-	ARG		@@FILE:byte, @@FILEHANDLE:word ; @@FILE ==> pointer naar nodige bestand, @@FILEHANDLE ==> pointer naar cursor voor nodige bestand, zie bijhorende offset in datasegment
+PROC openFile ; de offset van een variabele neemt 32 bits in beslag
+	ARG	@@FILE:dword, @@FILEHANDLE:dword ; @@FILE ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG, @@FILEHANDLE ==> adres van cursor naar nodige bestand in UDATASEG
 	USES eax, ebx, ecx, edx
 	mov al, 0 ; read only
-	mov edx, [[@@FILE]] ; pointer naar bestand in edx stoppen, register gebruikt voor I/O operaties  (VERBETERING NODIG!!!)
+	mov edx, [@@FILE] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
 	mov ah, 3dh ; mode om een bestand te openen
 	int 21
 	
@@ -90,14 +87,16 @@ PROC openFile
 	call terminateProcess ; proces beïndigen aangezien er een error was
 	
 @@no_error:
-	mov [@@FILEHANDLE], ax ; INT 21 (AH=3Dh) zal in AX de file handle teruggeven
+	mov ebx, [@@FILEHANDLE] ; ik maak gebruik van deze tussenstap, aangezien [[@@FILEHANDLE]] niet mag
+	mov [ebx], ax ; INT 21 (AH=3Dh) zal in AX de filehandle teruggeven
 	ret
 ENDP openFile
 
 PROC closeFile
-	ARG		@@FILEHANDLE:word
+	ARG	@@FILEHANDLE:dword
 	USES eax, ebx, edx
-	mov bx, [@@FILEHANDLE]
+	mov ebx, [@@FILEHANDLE]
+	mov bx, [ebx]
 	mov ah, 3Eh ; mode om een bestand te sluiten
 	int 21h
 	
@@ -117,19 +116,17 @@ PROC closeFile
 ENDP closeFile
 
 PROC readChunk
-	ARG		@@FILEHANDLE:word
+	ARG	@@FILEHANDLE:dword, @@SPRITE_SIZE:word, @@ARRAY_BYTES:dword ; @@SPRITE_SIZE ==> getal die overeenkomt met aantal pixels van sprite, @@ARRAY_BYTES ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
 	USES eax, ebx, ecx, edx
-	mov bx, [filehandle]
-	mov cx, FRAMESIZE
-	mov edx, offset packedframe
+	mov ebx, [@@FILEHANDLE]
+	mov bx, [ebx]
+	mov cx, [@@SPRITE_SIZE]
+	mov edx, [@@ARRAY_BYTES] 
 	mov ah, 3fh								
 	int 21h
 	
 	jnc @@no_error  	
-
-<<<<<<< HEAD
-...
-=======
+	
 	call setVideoMode, 03h
 	mov  ah, 09h
 	mov  edx, offset readErrorMsg
@@ -141,8 +138,6 @@ PROC readChunk
 	
 @@no_error:
 	ret
->>>>>>> e69bf7aa03a13ec3ceb692ab9f52447e400edf5b
-
 ENDP readChunk
 
 
@@ -229,13 +224,20 @@ ENDP main
 ; -------------------------------------------------------------------
 DATASEG
 	ball_struct 	ball < position <150, 100>, ball_sprite >
+	
 	ball_file 		db "ball", 0
-	gblock_file 	db "greenstone", 0
+	paddle_file		db "paddle", 0
+	bstone_file		db "bluestone", 0
+	gstone_file 	db "greenstone", 0
+	rstone_file		db "redstone", 0
+	ystone_file		db "yellowstone", 0
+	
 	openErrorMsg 	db "could not open file", 13, 10, '$'
+	readErrorMsg 	db "could not read data", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
 	
-UDATASEG
-	filehandle dw ?
+UDATASEG ; unitialised datasegment, zoals declaratie in C
+	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?  
 	ball_sprite db FRAMESIZE dup (?)
 ; -------------------------------------------------------------------
 ; STACK
