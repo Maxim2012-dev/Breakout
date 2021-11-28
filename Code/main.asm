@@ -46,6 +46,20 @@ PROC terminateProcess
 	ret
 ENDP terminateProcess
 
+; Wait for a specific keystroke.
+PROC waitForSpecificKeystroke
+	ARG 	@@key:byte
+	USES 	eax
+
+	@@waitForKeystroke:
+		mov	ah,00h
+		int	16h
+		cmp	al,[@@key]
+	jne	@@waitForKeystroke
+
+	ret
+ENDP waitForSpecificKeystroke
+
 ; wait for @@framecount frames
 PROC wait_VBLANK
 	USES eax, edx
@@ -79,7 +93,7 @@ PROC openFile ; de offset van een variabele neemt 32 bits in beslag
 	mov  edx, offset openErrorMsg ; string die geprint moet worden
 	int  21h
 	
-	; wacht op het indrukken van een toets en geeft terug welke deze is, maar dat is niet van belang, daar wordt niets mee gedaan
+	; wacht op het indrukken van een toets en geeft terug welke deze is, maar dat is niet van belang, daar wordt niets mee gedaan, VRAAG: WAAROM WACHT DIT EIGENLIJK OP EEN TOETS INVOER? IK MOET TOCH NIET OP EEN TOETS DRUKKEN.
 	mov	 ah, 00h
 	int	 16h
 	call terminateProcess ; proces beïndigen aangezien er een error was
@@ -236,6 +250,7 @@ PROC main
 	; ; call drawlogistic
 		
 	; loop @@gameloop
+	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
 ENDP main
 	  
