@@ -28,19 +28,11 @@ ENDS position
 
 	
 STRUC paddle
-<<<<<<< HEAD
-	position dd 0	; position struct -> x -en y-coördinaat
-	health db 3
-	width db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT? JA
-	height db 0
-	sprite dd 0		; pointer naar sprite image, OPMERKING: DIT IS VOLGENS MIJ (ALEXANDRE) NIET NODIG, KLOPT HET? WANT HET WORDT WEL OP SLIDE 10 VAN WPO5 GEBRUIKT, DAARDOOR DAT WE NIET ZEKER ZIJN.
-=======
 	position 	dd 0	; position struct -> x -en y-coördinaat
 	health 		db 3
-	width 		db 0 		; VRAAG: IS WIDTH MISSCHIEN EEN KEYWORD IN ASSEMBLY, AANGEZIEN DEZE ANDERS KLEURT?
+	breadth 	db 0 	; aangezien width een keyword is, gebruiken we breadth
 	height 		db 0
-	sprite 		dd 0		; pointer naar byte array (sprite)
->>>>>>> e69bf7aa03a13ec3ceb692ab9f52447e400edf5b
+	sprite 		dd 0	; pointer naar sprite image
 ENDS paddle
 
 
@@ -61,7 +53,7 @@ DATASEG
 ; INSTANTIES VAN STRUCTS MAKEN
 
 x postion 10 dup < 1, 2 > ; een lijst van 10 position structs
-y position < , > ; een position struct met de 
+y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 ; -------------------------------------------------------------------
 ; STACK

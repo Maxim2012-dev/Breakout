@@ -21,6 +21,20 @@ VIDMEMADR EQU 0A0000h	; videogeheugenadres
 SCRWIDTH EQU 320		; schermbreedte
 SCRHEIGHT EQU 200		; schermhoogte
 
+BALLWIDTH EQU 8
+BALLHEIGHT EQU 8
+BALLSIZE EQU BALLWIDTH*BALLHEIGHT
+
+PADDLEWIDTH EQU 40
+PADDLEHEIGHT EQU 8
+PADDLESIZE EQU PADDLEWIDTH*PADDLEHEIGHT
+
+STONEWIDTH EQU 32
+STONEHEIGHT EQU 12
+STONESIZE EQU STONEWIDTH*STONEHEIGHT
+
+
+
 ; -------------------------------------------------------------------
 ; CODE
 ; -------------------------------------------------------------------
@@ -78,10 +92,10 @@ PROC wait_VBLANK
 ENDP wait_VBLANK
 
 PROC openFile ; de offset van een variabele neemt 32 bits in beslag
-	ARG	@@FILE:dword ; @@FILE ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
+	ARG	@@file:dword ; @@file ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
 	USES eax, ebx, ecx, edx
 	mov al, 0 ; read only
-	mov edx, [@@FILE] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
+	mov edx, [@@file] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
 	mov ah, 3dh ; mode om een bestand te openen
 	int 21
 	
@@ -104,7 +118,7 @@ PROC openFile ; de offset van een variabele neemt 32 bits in beslag
 ENDP openFile
 
 PROC closeFile
-	USES eax, ebx, edx ; VRAAG: REGISTER ECX TOCH NIET NODIG? (WANT DEZE WORDT GEPRESERVED IN DANCER)
+	USES eax, ebx, ecx, edx ; VRAAG: REGISTER ECX TOCH NIET NODIG? (WANT DEZE WORDT GEPRESERVED IN DANCER)
 	mov bx, [filehandle]
 	mov ah, 3Eh ; mode om een bestand te sluiten
 	int 21h
@@ -125,11 +139,11 @@ PROC closeFile
 ENDP closeFile
 
 PROC readChunk
-	ARG @@SPRITE_SIZE:word, @@ARRAY_BYTES:dword ; @@SPRITE_SIZE ==> getal die overeenkomt met aantal pixels van sprite, @@ARRAY_BYTES ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
+	ARG @@sprite_size:word, @@arrayptr:dword ; @@sprite_size ==> getal die overeenkomt met aantal pixels van sprite, @@arrayptr ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
 	USES eax, ebx, ecx, edx
 	mov bx, [filehandle]
-	mov cx, [@@SPRITE_SIZE]
-	mov edx, [@@ARRAY_BYTES] 
+	mov cx, [@@sprite_size]
+	mov edx, [@@arrayptr] 
 	mov ah, 3fh								
 	int 21h
 	
@@ -170,6 +184,59 @@ PROC fillBackground
 
 	ret
 ENDP fillBackground
+
+PROC print_byte
+	ARG	@@printval:byte
+	USES eax, ebx, ecx, edx
+
+	movzx eax, [@@printval]
+	mov	ebx, 10		; divider
+	xor ecx, ecx	; counter for digits to be printed
+
+	; Store digits on stack
+@@getNextDigit: 
+	inc	ecx         ; increase digit counter
+	xor edx, edx
+	div	ebx   		; divide eax by 10
+	push dx			; store remainder on stack
+	test eax, eax	; check whether zero?
+	jnz	@@getNextDigit
+
+    ; Write all digits to the standard output
+	mov	ah, 2h 		; Function for printing single characters.
+@@printDigits:		
+	pop dx
+	add	dl,'0'      	; Add 30h => code for a digit in the ASCII table, ...
+	int	21h            	; Print the digit to the screen, ...
+	loop @@printDigits	; Until digit counter = 0.
+	
+	ret
+ENDP print_byte
+
+PROC print_array
+	ARG	@@arraylength:word, @@arrayptr:dword
+	USES eax, ebx, ecx, edx
+	
+	movzx ecx, [@@arraylength]
+	mov ebx, [@@arrayptr]
+	
+	mov	ah, 2h 		; Function for printing single characters.
+@@printInt:
+	call print_byte, [byte ptr ebx] ; dit moet je vermelden aangezien de compiler niet weet hoe groot de waarde is
+	mov dl, ','
+	int	21h		; print comma
+	mov dl, ' '
+	int 21h		; print space
+	inc ebx		; ga naar volgende integer, elke getal wordt bij ons voorgesteld a.d.h.v. één byte (dus ebx + 1)
+	loop @@printInt	; loop over all integers
+	
+	mov	dl, 0Dh		; Carriage return.
+	int	21h
+	mov	dl, 0Ah		; New line.
+	int 21h
+	
+	ret
+ENDP print_array
 
 
 ; PROC gamelogistic
@@ -237,8 +304,18 @@ PROC main
 	push ds
 	pop	es           
 
-	call setVideoMode, 13h
-	call fillBackground, 0
+	;call setVideoMode, 13h
+	;call fillBackground, 0
+	
+	call openFile, offset ball_file
+	call readChunk, BALLSIZE, offset ball_array
+	call closeFile
+	
+	call print_array, BALLSIZE, offset ball_array
+	
+	;call openFile, offset paddle_file
+	;call readChunk, PADDLESIZE, offset paddle_array
+	;call closeFile
 	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
@@ -263,18 +340,23 @@ DATASEG
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
-	bstone_file		db "bluestone", 0
-	gstone_file 	db "greenstone", 0
-	rstone_file		db "redstone", 0
-	ystone_file		db "yellowstone", 0
+	bstone_file		db "bstone", 0
+	gstone_file 	db "gstone", 0
+	rstone_file		db "rstone", 0
+	ystone_file		db "ystone", 0
 	
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	readErrorMsg 	db "could not read data", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
-	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?  
-	; ball_sprite db FRAMESIZE dup (?)
+	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
+	ball_array db BALLSIZE dup (?)
+	paddle_array db PADDLESIZE dup (?)
+	bstone_array db STONESIZE dup (?)
+	gstone_array db STONESIZE dup (?)
+	rstone_array db STONESIZE dup (?)
+	ystone_array db STONESIZE dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
