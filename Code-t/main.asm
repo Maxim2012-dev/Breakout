@@ -92,10 +92,10 @@ PROC wait_VBLANK
 ENDP wait_VBLANK
 
 PROC openFile ; de offset van een variabele neemt 32 bits in beslag
-	;ARG	@@file:dword ; @@file ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
+	ARG	@@file:dword ; @@file ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
 	USES eax, ebx, ecx, edx
 	mov al, 0 ; read only
-	mov edx, offset ball_file;[@@file] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
+	mov edx, [@@file] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
 	mov ah, 3dh ; mode om een bestand te openen
 	int 21
 	
@@ -307,8 +307,8 @@ PROC main
 	;call setVideoMode, 13h
 	;call fillBackground, 0
 	
-	call openFile;, offset ball_file
-	call readChunk, BALLSIZE, offset ball_array
+	call openFile, offset paddle_file
+	call readChunk, PADDLESIZE, offset paddle_array
 	call closeFile
 	
 	;call print_array, BALLSIZE, offset ball_array
@@ -339,7 +339,7 @@ DATASEG
 	;ball_struct 	ball < position <150, 100>, ball_sprite >
 	
 	ball_file 		db "ball", 0
-	paddle_file		db "paddle", 0
+	paddle_file		db "paddlep", 0
 	bstone_file		db "bstone", 0
 	gstone_file 	db "gstone", 0
 	rstone_file		db "rstone", 0
