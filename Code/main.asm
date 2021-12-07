@@ -216,25 +216,25 @@ ENDS Stone
 ; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
 	ARG 	@@STRUCT:byte @@WIDTH:byte @@HEIGHT:byte
-	USES eax, ecx, edi
+	USES eax, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
 	mov eax, [@@HEIGHT]		 			; eax --> hoogte van sprite
 	mov al, [ebx + ball.sprite]
 		
 	; voor alle rijen in sprite	
-	row_loop:
+	@@row_loop:
 		mov ecx, [@@WIDTH]   	; ecx --> breedte van sprite
 		; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		copy_loop:
+		@@copy_loop:
 			stosb					; [edi] vullen met al
 			inc al
-			loop copy_loop
+			loop @@copy_loop
 			
 		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
 		sub edi, [@@WIDTH]	
 		dec eax
-		jnz row_loop
+		jnz @@row_loop
 
 ENDP drawObject
 
@@ -256,10 +256,11 @@ PROC main
 	call setVideoMode, 13h
 	call fillBackground, 0
 	
-	call openFile, offset paddle_file
-	call readChunk, PADDLESIZE, offset paddle_array
+	call openFile, offset ball_file
+	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
+	call drawlogistic
 	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
@@ -280,7 +281,7 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
-	ball_struct 	ball < position <150, 100>, ball_array >
+	ball_object 	Ball < Position <150, 100>, , , >
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
