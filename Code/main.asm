@@ -304,8 +304,8 @@ PROC main
 	push ds
 	pop	es           
 
-	;call setVideoMode, 13h
-	;call fillBackground, 0
+	call setVideoMode, 13h
+	call fillBackground, 0
 	
 	call openFile, offset paddle_file
 	call readChunk, PADDLESIZE, offset paddle_array
