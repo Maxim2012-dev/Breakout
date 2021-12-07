@@ -215,7 +215,7 @@ ENDS Stone
 ; ; Generische tekenprocedure die struct verwacht
 ; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
-	ARG 	@@STRUCT:byte @@WIDTH:byte @@HEIGHT:byte
+	ARG 	@@STRUCT:byte, @@WIDTH:byte, @@HEIGHT:byte
 	USES eax, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
@@ -241,7 +241,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_struct, BALLWIDTH, BALLHEIGHT
+	call drawObject, offset ball_object, BALLWIDTH, BALLHEIGHT
 
 ENDP drawlogistic
 
@@ -281,7 +281,7 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
-	ball_object 	Ball < Position <150, 100>, , , >
+	ball_object 	Ball < Position <150, 100>,,,>
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
