@@ -18,42 +18,39 @@ start:
 ; DATA
 ; -------------------------------------------------------------------
 
-STRUC position
-	x dw 0		
-	y dw 0		; 1 byte/8 bits zou voldoende zijn, maar bij een schermhoogte groter dan 255 pixels niet meer.
-ENDS position
+STRUC Position ; (in cellen)
+	x db 0		
+	y db 0
+ENDS Position
 
-	
-STRUC paddle
-	position 	dd 0	; position struct -> x- en y-coördinaat
-	breadth 	db 0 	; aangezien width een keyword is, gebruiken we breadth
-	height 		db 0
+STRUC Ball
+	position 	Position < 0, 0 >
+	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
+	height		db BALLHEIGHT/CELLHEIGHT
+	sprite 		dd 0
+ENDS Ball
+
+STRUC Paddle
+	position 	Position < 0, 0 > ;  x- en y-coördinaat
+	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
+	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3
 	sprite 		dd 0	; pointer naar sprite image
-ENDS paddle
+ENDS Paddle
 
-
-STRUC ball
-	position 	dd 0
-	breadth		db 0
-	height		db 0
-	sprite 		dd 0
-ENDS ball
-
-
-STRUC stone
+STRUC Stone
 	index_position 	db 0		; index in grid
-	breadth			db 0
-	height			db 0
+	breadth			db STONEWIDTH/CELLWIDTH
+	height			db STONEHEIGHT/CELLHEIGHT
 	color 			db 0
 	sprite 			dd 0
-ENDS stone	
+ENDS Stone	
 
 DATASEG
 
 ; INSTANTIES VAN STRUCTS MAKEN
 
-x postion 10 dup < 1, 2 > ; een lijst van 10 position structs
+x position 10 dup < 1, 2 > ; een lijst van 10 position structs
 y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 ; -------------------------------------------------------------------

@@ -15,7 +15,7 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
 ;INCLUDE "keyb.inc"		; library custom keyboard handler
-INCLUDE "structs.asm"
+;INCLUDE "structs.asm"
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -166,6 +166,33 @@ PROC fillBackground
 
 	ret
 ENDP fillBackground
+
+STRUC Position ; (in cellen)
+	x db 0		
+	y db 0
+ENDS Position
+
+STRUC Ball
+	position 	Position < 0, 0 >
+	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
+	height		db BALLHEIGHT/CELLHEIGHT
+	sprite 		dd offset ball_array ; pointer naar sprite image
+ENDS Ball
+
+STRUC Paddle
+	position 	Position < 0, 0 > ;  x- en y-coördinaat
+	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
+	height 		db PADDLEHEIGHT/CELLHEIGHT
+	health 		db 3
+	sprite 		dd offset paddle_array	
+ENDS Paddle
+
+STRUC Stone
+	index_position 	db 0		; index in grid
+	breadth			db STONEWIDTH/CELLWIDTH
+	height			db STONEHEIGHT/CELLHEIGHT
+	sprite 			dd 0
+ENDS Stone	
 
 ; PROC gamelogistic
 
