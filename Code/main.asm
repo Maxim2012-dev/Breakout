@@ -13,27 +13,9 @@ P386
 MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
+INCLUDE "global.asm"
 ;INCLUDE "keyb.inc"		; library custom keyboard handler
-;INCLUDE "structs.asm"
-
-; constants a.d.h.v. macro's
-VIDMEMADR EQU 0A0000h	; videogeheugenadres
-SCRWIDTH EQU 320		; schermbreedte
-SCRHEIGHT EQU 200		; schermhoogte
-
-BALLWIDTH EQU 8
-BALLHEIGHT EQU 8
-BALLSIZE EQU BALLWIDTH*BALLHEIGHT
-
-PADDLEWIDTH EQU 40
-PADDLEHEIGHT EQU 8
-PADDLESIZE EQU PADDLEWIDTH*PADDLEHEIGHT
-
-STONEWIDTH EQU 32
-STONEHEIGHT EQU 12
-STONESIZE EQU STONEWIDTH*STONEHEIGHT
-
-
+INCLUDE "structs.asm"
 
 ; -------------------------------------------------------------------
 ; CODE

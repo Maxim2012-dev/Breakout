@@ -3,10 +3,7 @@ P386
 MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
-;; 1 cel wordt voorgesteld als 4 pixels op 4 pixels.
-CELLWIDTH EQU 4		; celbreedte
-CELLHEIGHT EQU 4	; celhoogte
-CELLSIZE EQU CELLWIDTH*CELLHEIGHT
+INCLUDE "global.asm"
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -28,22 +25,26 @@ ENDS position
 
 	
 STRUC paddle
-	position 	dd 0	; position struct -> x -en y-coördinaat
-	health 		db 3
+	position 	dd 0	; position struct -> x- en y-coördinaat
 	breadth 	db 0 	; aangezien width een keyword is, gebruiken we breadth
 	height 		db 0
+	health 		db 3
 	sprite 		dd 0	; pointer naar sprite image
 ENDS paddle
 
 
 STRUC ball
 	position 	dd 0
+	breadth		db 0
+	height		db 0
 	sprite 		dd 0
 ENDS ball
 
 
 STRUC stone
 	index_position 	db 0		; index in grid
+	breadth			db 0
+	height			db 0
 	color 			db 0
 	sprite 			dd 0
 ENDS stone	
