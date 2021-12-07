@@ -205,43 +205,37 @@ ENDP fillBackground
 
 ; ; Generische tekenprocedure die struct verwacht
 ; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
-; PROC drawObject
-	; ARG 	@@STRUCT:byte
-	; USES ; OPMERKING_A: VERGETEN VERMELDEN
-	; mov ebx, [@@STRUCT]
-	; mov edi, VIDMEMADR
-	; mov ecx, [ebx + [@@STRUCT].sprite]   	; ecx --> breedte van sprite, OPMERKING_A: VOLGENS MIJ WERKT DIT NIET ZO, ZIE WPO5 SLIDE 10
-	; mov eax, [ecx] + 1			 			; eax --> hoogte van sprite
-	; mov al, [ecx] + 2
+PROC drawObject
+	ARG 	@@STRUCT:byte @@WIDTH:byte @@HEIGHT:byte
+	USES eax, ecx, edi
+	mov ebx, [@@STRUCT]
+	mov edi, VIDMEMADR
+	mov eax, [@@HEIGHT]		 			; eax --> hoogte van sprite
+	mov al, [ebx + ball.sprite]
 		
-	; ; voor alle rijen in sprite	
-	; row_loop:
-		; ; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		; copy_loop:
-			; stosb					; [edi] vullen met al
-			; inc al
-			; loop copy_loop
-		
-		; mov ecx, [ebx + [@@STRUCT].sprite]		; ecx opnieuw initialiseren met breedte sprite
-		; add edi, 320 - [ecx]					; naar volgende rij gaan in videogeheugen
-		; dec eax
-		; test eax, eax
-		; jnz row_loop
+	; voor alle rijen in sprite	
+	row_loop:
+		mov ecx, [@@WIDTH]   	; ecx --> breedte van sprite
+		; bytes van huidige rij in sprite kopiëren naar videogeheugen
+		copy_loop:
+			stosb					; [edi] vullen met al
+			inc al
+			loop copy_loop
+			
+		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
+		sub edi, [@@WIDTH]	
+		dec eax
+		jnz row_loop
 
-; ENDP drawObject
+ENDP drawObject
 
-; PROC drawBall ; OPMERKING_A: IS MISSCHIEN NIET NODIG EN KAN MEN RECHTSTREEKS OPROEPEN IN DRAWLOGISTIC
+
+PROC drawlogistic
 	
-	; call drawObject, ; STRUC ball		; Hier moet een ball structure worden meegegeven
-	
-; ENDP drawBall
+	call drawObject, offset ball_struct, BALLWIDTH, BALLHEIGHT
 
+ENDP drawlogistic
 
-; PROC drawlogistic
-	
-	; call drawBall, 
-
-; ENDP drawlogistic
 
 PROC main
 	sti
@@ -257,9 +251,6 @@ PROC main
 	call readChunk, PADDLESIZE, offset paddle_array
 	call closeFile
 	
-	;call openFile, offset paddle_file
-	;call readChunk, PADDLESIZE, offset paddle_array
-	;call closeFile
 	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
@@ -280,7 +271,7 @@ ENDP main
 ; DATA
 ; -------------------------------------------------------------------
 DATASEG
-	;ball_struct 	ball < position <150, 100>, ball_sprite >
+	ball_struct 	ball < position <150, 100>, ball_array >
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
