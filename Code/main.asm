@@ -215,24 +215,24 @@ ENDS Stone
 ; ; Generische tekenprocedure die struct verwacht
 ; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
-	ARG 	@@STRUCT:dword, @@WIDTH:dword, @@HEIGHT:dword
+	ARG 	@@STRUCT:dword
 	USES eax, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov edx, [@@HEIGHT]		 			; eax --> hoogte van sprite
+	mov dl, [ebx + Ball.height]		 			; eax --> hoogte van sprite
 	mov eax, [ebx + Ball.sprite]
 		
 	; voor alle rijen in sprite	
 	@@row_loop:
-		mov ecx, [@@WIDTH]   	; ecx --> breedte van sprite
+		mov cl, [ebx + Ball.breadth]   	; ecx --> breedte van sprite
 		; bytes van huidige rij in sprite kopiëren naar videogeheugen
 		@@copy_loop:
-			stosb					; [edi] vullen met al
+			stosb					; [edi] vullen met eax
 			inc eax
 			loop @@copy_loop
 			
 		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
-		sub edi, [@@WIDTH]	
+		sub edi, [ebx + Ball.breadth]	
 		dec edx
 		jnz @@row_loop
 
@@ -241,7 +241,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object, BALLWIDTH, BALLHEIGHT
+	call drawObject, offset ball_object
 
 ENDP drawlogistic
 
