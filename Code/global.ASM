@@ -27,6 +27,16 @@ CELLHEIGHT EQU 4	; celhoogte
 BOARDWIDTH EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
 BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 
+; positie van eerste steen in lijst (in cellen)
+
+STONESPOSX EQU 0
+STONESPOSY EQU 0
+
+COLSTONES EQU 6
+ROWSTONES EQU 8
+
+ROWSPERCOLOUR EQU 2
+
 ; -------------------------------------------------------------------
 ; CODE
 ; -------------------------------------------------------------------

@@ -18,20 +18,17 @@ start:
 ; DATA
 ; -------------------------------------------------------------------
 
-STRUC Position ; (in cellen)
-	x db 0		
-	y db 0
-ENDS Position
-
 STRUC Ball
-	position 	Position < 0, 0 >
+	x			db 0 ; (in cellen)
+	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 	sprite 		dd 0
 ENDS Ball
 
 STRUC Paddle
-	position 	Position < 0, 0 > ;  x- en y-coördinaat
+	x 			db 0
+	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3
