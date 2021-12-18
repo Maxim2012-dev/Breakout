@@ -242,7 +242,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset paddle_object
+	call drawObject, offset ball_object
 	ret
 
 ENDP drawlogistic
@@ -262,17 +262,19 @@ PROC main
 	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
+	call drawObject, offset ball_object
+	
 	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; ; Vervolgens in de spellus gaan.
 	 
-	@@gameloop:
+	; @@gameloop:
 		
-		; ; call gamelogistic
-		call drawlogistic
+		; ; ; call gamelogistic
+		; call drawlogistic
 		
-	loop @@gameloop
+	; loop @@gameloop
 	
 	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
