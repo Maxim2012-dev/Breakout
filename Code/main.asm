@@ -15,7 +15,7 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
 ;INCLUDE "keyb.inc"		; library custom keyboard handler
-;INCLUDE "structs.asm"
+INCLUDE "structs.asm"
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -167,20 +167,17 @@ PROC fillBackground
 	ret
 ENDP fillBackground
 
-STRUC Position ; (in cellen)
-	x db 0		
-	y db 0
-ENDS Position
-
 STRUC Ball
-	position 	Position < 0, 0 >
+	x			db 0 ; (in cellen)
+	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 	sprite 		dd offset ball_array ; pointer naar sprite image
 ENDS Ball
 
 STRUC Paddle
-	position 	Position < 0, 0 > ;  x- en y-coördinaat
+	x 			db 0
+	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3
@@ -280,6 +277,12 @@ ENDP main
 ; -------------------------------------------------------------------
 ; DATA
 ; -------------------------------------------------------------------
+
+; INSTANTIES VAN STRUCTS MAKEN, behouden zodat we weten hoe het moet!
+
+;x position 10 dup < 1, 2 > ; een lijst van 10 position structs
+;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
+
 DATASEG
 	ball_object 	Ball <150,100>
 	
