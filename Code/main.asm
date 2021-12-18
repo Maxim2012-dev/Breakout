@@ -179,7 +179,7 @@ STRUC Paddle
 	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
-	health 		db 3
+	health 		db 3 
 	sprite 		dd offset paddle_array	
 ENDS Paddle
 
@@ -210,28 +210,27 @@ ENDS Stone
 
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject
-	ARG 	@@STRUCT:dword
-	USES eax, ebx, ecx, edx, edi
+	ARG 	@@STRUCT:dword, @@SPRITE:dword
+	USES esi, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov edx, BALLHEIGHT-1	 			; eax --> hoogte van sprite
-	mov eax, [ebx + Ball.sprite]
+	mov edx, BALLHEIGHT	 			; eax --> hoogte van sprite (aantal bytes)
+	mov esi, [ebx + Ball.sprite]
 	add edi, 10*320+100
 		
-	mov ecx, BALLWIDTH-1 	
+	mov ecx, BALLWIDTH				; aantal bytes voor 'rep movsb'
 	; voor alle rijen in sprite	
 	@@row_loop:
 		
 		; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		
-		rep stosb
+	
+		rep movsb
 		;@@copy_loop:
 							; [edi] vullen met eax
 			; inc eax
 			; loop @@copy_loop
 			
-		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
-		sub edi, BALLWIDTH	
+		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
 		dec edx
 		jnz @@row_loop
 	
@@ -242,7 +241,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object
+	call drawObject, offset ball_object, offset ball_array
 	ret
 
 ENDP drawlogistic
@@ -262,7 +261,7 @@ PROC main
 	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
-	call drawObject, offset ball_object
+	call drawlogistic
 	
 	; call __keyb_installKeyboardHandler
 	 
@@ -291,7 +290,7 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <150,100>
+	ball_object 	Ball <>
 	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0
