@@ -15,7 +15,6 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
 ;INCLUDE "keyb.inc"		; library custom keyboard handler
-INCLUDE "structs.asm"
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -210,35 +209,41 @@ ENDS Stone
 ; ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
-; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
 	ARG 	@@STRUCT:dword
 	USES eax, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov dl, [ebx + Ball.height]		 			; eax --> hoogte van sprite
+	mov edx, BALLHEIGHT-1	 			; eax --> hoogte van sprite
 	mov eax, [ebx + Ball.sprite]
+	add edi, 10*320+100
 		
+	mov ecx, BALLWIDTH-1 	
 	; voor alle rijen in sprite	
 	@@row_loop:
-		mov cl, [ebx + Ball.breadth]   	; ecx --> breedte van sprite
+		
 		; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		@@copy_loop:
-			stosb					; [edi] vullen met eax
-			inc eax
-			loop @@copy_loop
+		
+		rep stosb
+		;@@copy_loop:
+							; [edi] vullen met eax
+			; inc eax
+			; loop @@copy_loop
 			
 		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
 		sub edi, BALLWIDTH	
-		dec dl
+		dec edx
 		jnz @@row_loop
+	
+	ret
 
 ENDP drawObject
 
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object
+	call drawObject, offset paddle_object
+	ret
 
 ENDP drawlogistic
 
@@ -257,18 +262,18 @@ PROC main
 	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
-	call drawlogistic
 	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; ; Vervolgens in de spellus gaan.
 	 
-	; @@gameloop:
+	@@gameloop:
 		
-	; ; call gamelogistic
-	; ; call drawlogistic
+		; ; call gamelogistic
+		call drawlogistic
 		
-	; loop @@gameloop
+	loop @@gameloop
+	
 	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
 ENDP main
@@ -285,6 +290,7 @@ ENDP main
 
 DATASEG
 	ball_object 	Ball <150,100>
+	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
