@@ -232,7 +232,7 @@ PROC drawObject
 			loop @@copy_loop
 			
 		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
-		sub edi, BALLWIDTH	
+		sub edi, [ebx + Ball.breadth]	
 		dec dl
 		jnz @@row_loop
 
