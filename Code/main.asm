@@ -167,14 +167,14 @@ PROC fillBackground
 ENDP fillBackground
 
 STRUC Ball
-	x			db 0 ; (in cellen)
+	x			dw 0 ; (in cellen)
 	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 ENDS Ball
 
 STRUC Paddle
-	x 			db 0
+	x 			dw 0
 	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
@@ -208,9 +208,8 @@ ENDS Stone
 
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject
-	ARG @@STRUCT:dword, @@SPRITE:dword
-	USES esi, ebx, ecx, edx, edi
-	mov ebx, [@@STRUCT]
+	ARG @@SPRITE:dword, @@XPOS:word, @@YPOS:byte
+	USES esi, ecx, edx, edi
 	mov edi, VIDMEMADR
 	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
 	mov esi, [@@SPRITE]
@@ -234,7 +233,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object, offset ball_array
+	call drawObject, offset ball_array, [offset ball_object + Ball.x], [offset ball_object + Ball.y]
 	; call drawObject, offset paddle_object, offset paddle_array
 	ret
 
