@@ -14,7 +14,7 @@ MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
-;INCLUDE "keyb.inc"		; library custom keyboard handler
+; INCLUDE "KEYB.asm"		; library custom keyboard handler
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -171,7 +171,6 @@ STRUC Ball
 	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
-	sprite 		dd offset ball_array ; pointer naar sprite image
 ENDS Ball
 
 STRUC Paddle
@@ -180,7 +179,6 @@ STRUC Paddle
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3 
-	sprite 		dd offset paddle_array	
 ENDS Paddle
 
 STRUC Stone
@@ -205,7 +203,7 @@ ENDS Stone
 		
 	; @@moveLeft:
 		; ; call movePaddleLeft
-
+ 
 ; ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
@@ -214,21 +212,17 @@ PROC drawObject
 	USES esi, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov edx, BALLHEIGHT	 			; eax --> hoogte van sprite (aantal bytes)
-	mov esi, [ebx + Ball.sprite]
-	add edi, 10*320+100
+	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	mov esi, [@@SPRITE]
+	add edi, 20*320+100
+		
+	; TODO -- Tekenen op basis van x -en y-coördinaat	
 		
 	mov ecx, BALLWIDTH				; aantal bytes voor 'rep movsb'
-	; voor alle rijen in sprite	
-	@@row_loop:
-		
-		; bytes van huidige rij in sprite kopiëren naar videogeheugen
 	
-		rep movsb
-		;@@copy_loop:
-							; [edi] vullen met eax
-			; inc eax
-			; loop @@copy_loop
+	@@row_loop:						; voor alle rijen in sprite	
+
+		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
 			
 		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
 		dec edx
@@ -242,6 +236,7 @@ ENDP drawObject
 PROC drawlogistic
 	
 	call drawObject, offset ball_object, offset ball_array
+	; call drawObject, offset paddle_object, offset paddle_array
 	ret
 
 ENDP drawlogistic
@@ -257,13 +252,13 @@ PROC main
 	call setVideoMode, 13h
 	call fillBackground, 0
 	
+	; call __keyb_installKeyboardHandler
+	
 	call openFile, offset ball_file
 	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
 	call drawlogistic
-	
-	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; ; Vervolgens in de spellus gaan.
@@ -290,7 +285,7 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <>
+	ball_object 	Ball <155, 80>
 	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0

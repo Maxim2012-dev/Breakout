@@ -14,8 +14,7 @@ MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
-;INCLUDE "keyb.inc"		; library custom keyboard handler
-;INCLUDE "structs.asm"
+; INCLUDE "KEYB.asm"		; library custom keyboard handler
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -167,24 +166,19 @@ PROC fillBackground
 	ret
 ENDP fillBackground
 
-STRUC Position ; (in cellen)
-	x db 0		
-	y db 0
-ENDS Position
-
 STRUC Ball
-	position 	Position < 0, 0 >
+	x			db 0 ; (in cellen)
+	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
-	sprite 		dd offset ball_array ; pointer naar sprite image
 ENDS Ball
 
 STRUC Paddle
-	position 	Position < 0, 0 > ;  x- en y-coördinaat
+	x 			db 0
+	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
-	health 		db 3
-	sprite 		dd offset paddle_array	
+	health 		db 3 
 ENDS Paddle
 
 STRUC Stone
@@ -209,39 +203,40 @@ ENDS Stone
 		
 	; @@moveLeft:
 		; ; call movePaddleLeft
-
+ 
 ; ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
-; ; breedte en hoogte van sprite worden in respectievelijk de eerste en tweede positie van array gestoken
 PROC drawObject
-	ARG 	@@STRUCT:dword
-	USES eax, ebx, ecx, edx, edi
+	ARG 	@@STRUCT:dword, @@SPRITE:dword
+	USES esi, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
-	mov dl, [ebx + Ball.height]		 			; eax --> hoogte van sprite
-	mov eax, [ebx + Ball.sprite]
+	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	mov esi, [@@SPRITE]
 		
-	; voor alle rijen in sprite	
-	@@row_loop:
-		mov cl, [ebx + Ball.breadth]   	; ecx --> breedte van sprite
-		; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		@@copy_loop:
-			stosb					; [edi] vullen met eax
-			inc eax
-			loop @@copy_loop
+	; TODO -- Tekenen op basis van x -en y-coördinaat	
+		
+	mov ecx, BALLWIDTH				; aantal bytes voor 'rep movsb'
+	
+	@@row_loop:						; voor alle rijen in sprite	
+
+		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
 			
-		add edi, SCRWIDTH	; naar volgende rij gaan in videogeheugen
-		sub edi, [ebx + Ball.breadth]	
-		dec dl
+		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
+		dec edx
 		jnz @@row_loop
+	
+	ret
 
 ENDP drawObject
 
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object
+	call drawObject, offset ball_object, offset ball_array
+	; call drawObject, offset paddle_object, offset paddle_array
+	ret
 
 ENDP drawlogistic
 
@@ -256,22 +251,24 @@ PROC main
 	call setVideoMode, 13h
 	call fillBackground, 0
 	
+	; call __keyb_installKeyboardHandler
+	
 	call openFile, offset ball_file
 	call readChunk, BALLSIZE, offset ball_array
 	call closeFile
 	
 	call drawlogistic
-	; call __keyb_installKeyboardHandler
 	 
 	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
 	; ; Vervolgens in de spellus gaan.
 	 
 	; @@gameloop:
 		
-	; ; call gamelogistic
-	; ; call drawlogistic
+		; ; ; call gamelogistic
+		; call drawlogistic
 		
 	; loop @@gameloop
+	
 	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
 ENDP main
@@ -280,8 +277,15 @@ ENDP main
 ; -------------------------------------------------------------------
 ; DATA
 ; -------------------------------------------------------------------
+
+; INSTANTIES VAN STRUCTS MAKEN, behouden zodat we weten hoe het moet!
+
+;x position 10 dup < 1, 2 > ; een lijst van 10 position structs
+;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
+
 DATASEG
-	ball_object 	Ball <150,100>
+	ball_object 	Ball <155, 80>
+	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
