@@ -186,7 +186,7 @@ STRUC Stone
 	breadth			db STONEWIDTH/CELLWIDTH
 	height			db STONEHEIGHT/CELLHEIGHT
 	sprite 			dd 0
-ENDS Stone	
+ENDS Stone	 
 
 ; PROC gamelogistic
 
@@ -208,7 +208,7 @@ ENDS Stone
 
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject
-	ARG 	@@STRUCT:dword, @@SPRITE:dword
+	ARG @@STRUCT:dword, @@SPRITE:dword
 	USES esi, ebx, ecx, edx, edi
 	mov ebx, [@@STRUCT]
 	mov edi, VIDMEMADR
@@ -217,11 +217,10 @@ PROC drawObject
 	add edi, 20*320+100
 		
 	; TODO -- Tekenen op basis van x -en y-coördinaat	
-		
-	mov ecx, BALLWIDTH				; aantal bytes voor 'rep movsb'
 	
-	@@row_loop:						; voor alle rijen in sprite	
+	@@row_loop:			; voor alle rijen in sprite	
 
+		mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'
 		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
 			
 		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
@@ -256,6 +255,10 @@ PROC main
 	
 	call openFile, offset ball_file
 	call readChunk, BALLSIZE, offset ball_array
+	call closeFile
+	
+	call openFile, offset paddle_file
+	call readChunk, PADDLESIZE, offset paddle_array
 	call closeFile
 	
 	call drawlogistic
