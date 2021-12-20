@@ -206,9 +206,9 @@ ENDS Stone
 ; ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
-PROC drawObject ; TODO -- cellen omvormen naar pixels
-	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
-	USES esi, eax, ebx, ecx, edx, edi
+PROC drawObject
+	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword, @@WIDTH:byte, @@HEIGHT:byte	; x en y coördinaat in cellen, breedte en hoogte in pixels
+	USES eax, ebx, ecx, esi, edi
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
 	movzx eax, [@@YPOS]
@@ -220,14 +220,16 @@ PROC drawObject ; TODO -- cellen omvormen naar pixels
 	mul ecx
 	add eax, ebx
 	add edi, eax
-	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	mov eax, SCRWIDTH
+	movzx ebx, [@@WIDTH]
+	sub eax, ebx
+	movzx ebx, [@@HEIGHT]
 	
 	@@row_loop:			; voor alle rijen in sprite	
-		mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'		; TODO -- Generisch maken
+		movzx ecx, [@@WIDTH]		; aantal bytes voor 'rep movsb'
 		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
-			
-		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
-		dec edx
+		add edi, eax	; naar volgende rij gaan in videogeheugen
+		dec ebx
 		jnz @@row_loop
 		
 	ret
@@ -239,14 +241,23 @@ PROC drawBall
 	mov ebx, [@@STRUCT]
 	movzx eax, [ebx + Ball.x]
 	movzx ebx, [ebx + Ball.y]
-	call drawObject, eax, ebx, offset ball_array
+	call drawObject, eax, ebx, offset ball_array, BALLWIDTH, BALLHEIGHT
 	ret
 ENDP drawBall
 
+PROC drawPaddle
+	ARG @@STRUCT:dword
+	USES eax, ebx
+	mov ebx, [@@STRUCT]
+	movzx eax, [ebx + Paddle.x]
+	movzx ebx, [ebx + Paddle.y]
+	call drawObject, eax, ebx, offset paddle_array, PADDLEWIDTH, PADDLEHEIGHT
+	ret
+ENDP drawPaddle
+	
 PROC drawlogistic
 	call drawBall, offset ball_object
-	; call drawObject, offset ball_object, offset ball_array
-	; call drawObject, offset paddle_object, offset paddle_array
+	call drawPaddle, offset paddle_object
 	ret
 ENDP drawlogistic
 
@@ -297,8 +308,8 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <78, 48> ; min_pos: (0,0), max_pos: (78, 48)
-	paddle_object 	Paddle <150,100>
+	ball_object 	Ball <BALLSTARTX, BALLSTARTY> ; min_pos: (0,0), max_pos: (78, 48)
+	paddle_object 	Paddle <PADDLESTARTX, PADDLESTARTY>
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
