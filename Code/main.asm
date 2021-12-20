@@ -190,8 +190,8 @@ ENDS Stone
 PROC movePaddleLeft
 	USES eax, ebx
 	mov ebx, offset paddle_object
-	mov al, [ebx + Paddle.x]
-	dec al
+	movzx eax, [ebx + Paddle.x]
+	dec eax
 	mov [ebx + Paddle.x], al
 	ret
 ENDP movePaddleLeft	
@@ -199,8 +199,8 @@ ENDP movePaddleLeft
 PROC movePaddleRight
 	USES eax, ebx
 	mov ebx, offset paddle_object
-	mov al, [ebx + Paddle.x]
-	inc al
+	movzx eax, [ebx + Paddle.x]
+	inc eax
 	mov [ebx + Paddle.x], al
 	ret
 ENDP movePaddleRight
@@ -326,6 +326,7 @@ PROC main
 	;; ------ GAME LOOP ------
 	@@gameloop:
 		
+		call fillBackground, 0
 		call gamelogistic
 		call drawlogistic
 		
