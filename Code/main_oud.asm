@@ -14,7 +14,7 @@ MODEL FLAT, C
 ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
-INCLUDE "keyb.inc"		; library custom keyboard handler
+; INCLUDE "KEYB.asm"		; library custom keyboard handler
 
 ; -------------------------------------------------------------------
 ; CODE
@@ -187,35 +187,23 @@ STRUC Stone
 	height			db STONEHEIGHT/CELLHEIGHT
 ENDS Stone	 
 
-PROC movePaddleLeft
-	USES eax, ebx
-	
-	ret
-ENDP movePaddleLeft	
+; PROC gamelogistic
 
-PROC movePaddleRight
-	USES eax, ebx
-	
-	ret
-ENDP movePaddleRight
-
-PROC gamelogistic
-
-	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
-	cmp al, 1
-	je @@moveRight
+	; mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
+	; cmp al, 1
+	; je @@moveRight
 		
-	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
-	cmp al, 1
-	je @@moveLeft
+	; mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
+	; cmp al, 1
+	; je @@moveLeft
 		
-	@@moveRight:
-		call movePaddleRight
+	; @@moveRight:
+		; ; call movePaddleRight
 		
-	@@moveLeft:
-		call movePaddleLeft
+	; @@moveLeft:
+		; ; call movePaddleLeft
  
-ENDP gamelogistic 
+; ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject
@@ -223,6 +211,7 @@ PROC drawObject
 	USES eax, ebx, ecx, esi, edi
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
+	; begin: positie van eerste pixel op scherm bepalen (omzetting van cellen naar pixels, x en y hebben als "eenheid" cellen)
 	movzx eax, [@@YPOS]
 	mov ebx, CELLHEIGHT*SCRWIDTH
 	mul ebx
@@ -232,16 +221,16 @@ PROC drawObject
 	mul ecx
 	add eax, ebx
 	add edi, eax
-	
+	; einde
 	mov eax, SCRWIDTH
 	movzx ebx, [@@WIDTH]
-	sub eax, ebx
-	movzx ebx, [@@HEIGHT]
+	sub eax, ebx 					; eax in row_loop gebruikt om naar de volgende rij te gaan in het videogeheugen
+	movzx ebx, [@@HEIGHT] 			; ebx bepaalt in de volgende loop hoeveel keer we nog moeten itereren
 	
-	@@row_loop:			; voor alle rijen in sprite	
-		movzx ecx, [@@WIDTH]		; aantal bytes voor 'rep movsb'
-		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		add edi, eax	; naar volgende rij gaan in videogeheugen
+	@@row_loop:						; voor alle rijen in sprite	
+		movzx ecx, [@@WIDTH]		; aantal bytes/kleurindexen voor 'rep movsb'
+		rep movsb					; bytes/kleurindexen van huidige rij in sprite kopiëren naar videogeheugen
+		add edi, eax				; naar volgende rij gaan in videogeheugen
 		dec ebx
 		jnz @@row_loop
 		
@@ -284,7 +273,7 @@ PROC main
 	call setVideoMode, 13h
 	call fillBackground, 0
 	
-	call __keyb_installKeyboardHandler
+	; call __keyb_installKeyboardHandler
 	
 	call openFile, offset ball_file
 	call readChunk, BALLSIZE, offset ball_array
@@ -296,7 +285,9 @@ PROC main
 	
 	call drawlogistic
 	 
-	;; ------ GAME LOOP -----
+	; ; Alle spelcomponenten tekenen (pedel, bal, grid van stenen).
+	; ; Vervolgens in de spellus gaan.
+	 
 	; @@gameloop:
 		
 		; ; ; call gamelogistic
