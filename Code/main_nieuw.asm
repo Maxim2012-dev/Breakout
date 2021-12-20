@@ -167,15 +167,15 @@ PROC fillBackground
 ENDP fillBackground
 
 STRUC Ball
-	x			db 0 ; (in cellen)
-	y			db 0
+	x			dw 0 ; (in cellen)
+	y			dw 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 ENDS Ball
 
 STRUC Paddle
-	x 			db 0
-	y 			db 0
+	x 			dw 0
+	y 			dw 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3 
@@ -206,24 +206,22 @@ ENDS Stone
  
 ; ENDP gamelogistic 
 
-; ; Generische tekenprocedure die struct verwacht
+; ; Generische tekenprocedure
 PROC drawObject
-	ARG @@STRUCT:dword, @@SPRITE:dword
-	USES esi, ebx, ecx, edx, edi
-	mov ebx, [@@STRUCT]
+	ARG @@SPRITE:dword, @@XPOS:word, @@YPOS:word
+	USES esi, ecx, edx, edi
 	mov edi, VIDMEMADR
-	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	mov edx, BALLHEIGHT	 					; TODO -- Generisch maken
 	mov esi, [@@SPRITE]
-	add edi, 20*320+100
-		
-	; TODO -- Tekenen op basis van x -en y-coördinaat	
 	
-	@@row_loop:			; voor alle rijen in sprite	
+	add edi, [@@YPOS]*SCRWIDTH+[@@XPOS]				; Naar juiste positie gaan in videogeheugen
+	
+	@@row_loop:								; voor alle rijen in sprite	
 
-		mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'
-		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
+		mov ecx, BALLWIDTH					; aantal bytes voor 'rep movsb'
+		rep movsb							; bytes van huidige rij in sprite kopiëren naar videogeheugen
 			
-		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
+		add edi, SCRWIDTH-BALLWIDTH			; naar volgende rij gaan in videogeheugen
 		dec edx
 		jnz @@row_loop
 	
@@ -234,7 +232,7 @@ ENDP drawObject
 
 PROC drawlogistic
 	
-	call drawObject, offset ball_object, offset ball_array
+	call drawObject, offset ball_array, [(Ball ptr ball_object).x], [(Ball ptr ball_object).y]
 	; call drawObject, offset paddle_object, offset paddle_array
 	ret
 
@@ -288,7 +286,7 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <155, 80>
+	ball_object 	Ball <150, 80>
 	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0

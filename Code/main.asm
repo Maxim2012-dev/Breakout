@@ -167,15 +167,15 @@ PROC fillBackground
 ENDP fillBackground
 
 STRUC Ball
-	x			dw 0 ; (in cellen)
-	y			dw 0
+	x			db 0 ; (in cellen)
+	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 ENDS Ball
 
 STRUC Paddle
-	x 			dw 0
-	y 			dw 0
+	x 			db 0
+	y 			db 0
 	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
 	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3 
@@ -185,7 +185,6 @@ STRUC Stone
 	index_position 	db 0		; index in grid
 	breadth			db STONEWIDTH/CELLWIDTH
 	height			db STONEHEIGHT/CELLHEIGHT
-	sprite 			dd 0
 ENDS Stone	 
 
 ; PROC gamelogistic
@@ -206,38 +205,74 @@ ENDS Stone
  
 ; ENDP gamelogistic 
 
-; ; Generische tekenprocedure
-PROC drawObject
-	ARG @@SPRITE:dword, @@XPOS:word, @@YPOS:word
-	USES esi, ecx, edx, edi
-	mov edi, VIDMEMADR
-	mov edx, BALLHEIGHT	 					; TODO -- Generisch maken
-	mov esi, [@@SPRITE]
+; ; ; Generische tekenprocedure die struct verwacht
+; PROC drawObject ; TODO -- cellen omvormen naar pixels
+	; ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
+	; USES esi, eax, ebx, ecx, edx, edi
+	; mov edi, VIDMEMADR
+	; mov esi, [@@SPRITE]
+	; mov eax, SCRWIDTH
+	; movzx ebx, [@@YPOS]
+	; mul ebx
+	; add al, [@@XPOS]
+	; add edi, eax
+	; mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
 	
-	add edi, [@@YPOS]*SCRWIDTH+[@@XPOS]				; Naar juiste positie gaan in videogeheugen
-	
-	@@row_loop:								; voor alle rijen in sprite	
-
-		mov ecx, BALLWIDTH					; aantal bytes voor 'rep movsb'
-		rep movsb							; bytes van huidige rij in sprite kopiëren naar videogeheugen
+	; @@row_loop:			; voor alle rijen in sprite	
+		; mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'		; TODO -- Generisch maken
+		; rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
 			
-		add edi, SCRWIDTH-BALLWIDTH			; naar volgende rij gaan in videogeheugen
+		; add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
+		; dec edx
+		; jnz @@row_loop
+		
+	; ret
+; ENDP drawObject
+
+; ; Generische tekenprocedure die struct verwacht
+PROC drawObject ; TODO -- cellen omvormen naar pixels
+	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
+	USES esi, eax, ebx, ecx, edx, edi
+	mov edi, VIDMEMADR
+	mov esi, [@@SPRITE]
+	mov al, [@@YPOS]
+	mov ebx, CELLHEIGHT*SCRWIDTH
+	mul ebx
+	mov ebx, eax
+	mov al, [@@XPOS]
+	mov ecx, CELLWIDTH 
+	mul ecx
+	add eax, ebx
+	add edi, eax
+	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	
+	@@row_loop:			; voor alle rijen in sprite	
+		mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'		; TODO -- Generisch maken
+		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
+			
+		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
 		dec edx
 		jnz @@row_loop
-	
+		
 	ret
-
 ENDP drawObject
 
+PROC drawBall
+	ARG @@STRUCT:dword
+	USES eax, ebx
+	mov ebx, [@@STRUCT]
+	movzx eax, [ebx + Ball.x]
+	movzx ebx, [ebx + Ball.y]
+	call drawObject, eax, ebx, offset ball_array
+	ret
+ENDP drawBall
 
 PROC drawlogistic
-	
-	call drawObject, offset ball_array, [(Ball ptr ball_object).x], [(Ball ptr ball_object).y]
+	call drawBall, offset ball_object
+	; call drawObject, offset ball_object, offset ball_array
 	; call drawObject, offset paddle_object, offset paddle_array
 	ret
-
 ENDP drawlogistic
-
 
 PROC main
 	sti
@@ -286,7 +321,7 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <150, 80>
+	ball_object 	Ball <20, 40>
 	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0
