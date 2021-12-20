@@ -250,9 +250,8 @@ PROC drawObject
 ENDP drawObject
 
 PROC drawBall
-	ARG @@STRUCT:dword
 	USES eax, ebx
-	mov ebx, [@@STRUCT]
+	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.x]
 	movzx ebx, [ebx + Ball.y]
 	call drawObject, eax, ebx, offset ball_array, BALLWIDTH, BALLHEIGHT
@@ -260,18 +259,22 @@ PROC drawBall
 ENDP drawBall
 
 PROC drawPaddle
-	ARG @@STRUCT:dword
 	USES eax, ebx
-	mov ebx, [@@STRUCT]
+	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
 	movzx ebx, [ebx + Paddle.y]
 	call drawObject, eax, ebx, offset paddle_array, PADDLEWIDTH, PADDLEHEIGHT
 	ret
 ENDP drawPaddle
+
+PROC drawStones
+
+	ret
+ENDP drawStones
 	
 PROC drawlogistic
-	call drawBall, offset ball_object
-	call drawPaddle, offset paddle_object
+	call drawBall
+	call drawPaddle
 	ret
 ENDP drawlogistic
 
@@ -295,7 +298,23 @@ PROC main
 	call readChunk, PADDLESIZE, offset paddle_array
 	call closeFile
 	
+	call openFile, offset bstone_file
+	call readChunk, STONESIZE, offset bstone_array
+	call closeFile
+	
+	call openFile, offset gstone_file
+	call readChunk, STONESIZE, offset gstone_array
+	call closeFile
+	
+	call openFile, offset rstone_file
+	call readChunk, STONESIZE, offset rstone_array
+	call closeFile
+	
 	call drawlogistic
+	
+	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
+	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
+	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
 	 
 	;; ------ GAME LOOP -----
 	; @@gameloop:
@@ -322,13 +341,14 @@ ENDP main
 DATASEG
 	ball_object 	Ball <BALLSTARTX, BALLSTARTY> ; min_pos: (0,0), max_pos: (78, 48)
 	paddle_object 	Paddle <PADDLESTARTX, PADDLESTARTY>
+	stones_array    Stone COLSTONES*ROWSTONES dup (< >)
 	
 	ball_file 		db "ball", 0
 	paddle_file		db "paddle", 0
 	bstone_file		db "bstone", 0
 	gstone_file 	db "gstone", 0
 	rstone_file		db "rstone", 0
-	ystone_file		db "ystone", 0
+	;ystone_file		db "ystone", 0
 	
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	readErrorMsg 	db "could not read data", 13, 10, '$'
@@ -341,7 +361,7 @@ UDATASEG ; unitialised datasegment, zoals declaratie in C
 	bstone_array db STONESIZE dup (?)
 	gstone_array db STONESIZE dup (?)
 	rstone_array db STONESIZE dup (?)
-	ystone_array db STONESIZE dup (?)
+	;ystone_array db STONESIZE dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
