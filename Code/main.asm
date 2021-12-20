@@ -189,16 +189,23 @@ ENDS Stone
 
 PROC movePaddleLeft
 	USES eax, ebx
-	
+	mov ebx, offset paddle_object
+	mov al, [ebx + Paddle.x]
+	dec al
+	mov [ebx + Paddle.x], al
 	ret
 ENDP movePaddleLeft	
 
 PROC movePaddleRight
 	USES eax, ebx
-	
+	mov ebx, offset paddle_object
+	mov al, [ebx + Paddle.x]
+	inc al
+	mov [ebx + Paddle.x], al
 	ret
 ENDP movePaddleRight
 
+;; SPELLOGICA
 PROC gamelogistic
 
 	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
@@ -316,13 +323,13 @@ PROC main
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
 	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
 	 
-	;; ------ GAME LOOP -----
-	; @@gameloop:
+	;; ------ GAME LOOP ------
+	@@gameloop:
 		
-		; ; ; call gamelogistic
-		; call drawlogistic
+		call gamelogistic
+		call drawlogistic
 		
-	; loop @@gameloop
+	loop @@gameloop
 	
 	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
