@@ -223,6 +223,7 @@ PROC drawObject
 	USES eax, ebx, ecx, esi, edi
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
+	; begin: positie van eerste pixel op scherm bepalen (omzetting van cellen naar pixels, x en y hebben als "eenheid" cellen)
 	movzx eax, [@@YPOS]
 	mov ebx, CELLHEIGHT*SCRWIDTH
 	mul ebx
@@ -232,16 +233,16 @@ PROC drawObject
 	mul ecx
 	add eax, ebx
 	add edi, eax
-	
+	; einde
 	mov eax, SCRWIDTH
 	movzx ebx, [@@WIDTH]
-	sub eax, ebx
-	movzx ebx, [@@HEIGHT]
+	sub eax, ebx 					; eax in row_loop gebruikt om naar de volgende rij te gaan in het videogeheugen
+	movzx ebx, [@@HEIGHT] 			; ebx bepaalt in de volgende loop hoeveel keer we nog moeten itereren
 	
-	@@row_loop:			; voor alle rijen in sprite	
-		movzx ecx, [@@WIDTH]		; aantal bytes voor 'rep movsb'
-		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
-		add edi, eax	; naar volgende rij gaan in videogeheugen
+	@@row_loop:						; voor alle rijen in sprite	
+		movzx ecx, [@@WIDTH]		; aantal bytes/kleurindexen voor 'rep movsb'
+		rep movsb					; bytes/kleurindexen van huidige rij in sprite kopiëren naar videogeheugen
+		add edi, eax				; naar volgende rij gaan in videogeheugen
 		dec ebx
 		jnz @@row_loop
 		

@@ -24,22 +24,20 @@ STONEWIDTH EQU 32 ; breedte van sprite (in pixels)
 STONEHEIGHT EQU 12 ; hoogte van sprite (in pixels)
 STONESIZE EQU STONEWIDTH*STONEHEIGHT
 
+; coördinaten van eerste steen 
+STONESSTARTX EQU 0
+STONESSTARTY EQU 0
+
+COLSTONES EQU 6
+ROWSTONES EQU 8
+ROWSPERCOLOUR EQU 2
+
 ;; 1 cel wordt voorgesteld als 4 pixels x 4 pixels.
 CELLWIDTH EQU 4		; celbreedte
 CELLHEIGHT EQU 4	; celhoogte
 
 BOARDWIDTH EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
 BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
-
-; positie van eerste steen in lijst (in cellen)
-
-STONESPOSX EQU 0
-STONESPOSY EQU 0
-
-COLSTONES EQU 6
-ROWSTONES EQU 8
-
-ROWSPERCOLOUR EQU 2
 
 ; -------------------------------------------------------------------
 ; CODE
