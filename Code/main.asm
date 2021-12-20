@@ -205,41 +205,17 @@ ENDS Stone
  
 ; ENDP gamelogistic 
 
-; ; ; Generische tekenprocedure die struct verwacht
-; PROC drawObject ; TODO -- cellen omvormen naar pixels
-	; ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
-	; USES esi, eax, ebx, ecx, edx, edi
-	; mov edi, VIDMEMADR
-	; mov esi, [@@SPRITE]
-	; mov eax, SCRWIDTH
-	; movzx ebx, [@@YPOS]
-	; mul ebx
-	; add al, [@@XPOS]
-	; add edi, eax
-	; mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
-	
-	; @@row_loop:			; voor alle rijen in sprite	
-		; mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'		; TODO -- Generisch maken
-		; rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
-			
-		; add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
-		; dec edx
-		; jnz @@row_loop
-		
-	; ret
-; ENDP drawObject
-
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject ; TODO -- cellen omvormen naar pixels
 	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
 	USES esi, eax, ebx, ecx, edx, edi
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
-	mov al, [@@YPOS]
+	movzx eax, [@@YPOS]
 	mov ebx, CELLHEIGHT*SCRWIDTH
 	mul ebx
 	mov ebx, eax
-	mov al, [@@XPOS]
+	movzx eax, [@@XPOS]
 	mov ecx, CELLWIDTH 
 	mul ecx
 	add eax, ebx
@@ -321,7 +297,7 @@ ENDP main
 ;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
-	ball_object 	Ball <20, 40>
+	ball_object 	Ball <78, 48> ; min_pos: (0,0), max_pos: (78, 48)
 	paddle_object 	Paddle <150,100>
 	
 	ball_file 		db "ball", 0

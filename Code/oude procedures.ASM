@@ -51,4 +51,28 @@ PROC print_array
 	ret
 ENDP print_array
 
+; PROCEDURE DIE OBJECTEN TEKENT (WERKT NOG MET PIXELS)
+PROC drawObject ; TODO -- cellen omvormen naar pixels
+	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
+	USES esi, eax, ebx, ecx, edx, edi
+	mov edi, VIDMEMADR
+	mov esi, [@@SPRITE]
+	mov eax, SCRWIDTH
+	movzx ebx, [@@YPOS]
+	mul ebx
+	add al, [@@XPOS]
+	add edi, eax
+	mov edx, BALLHEIGHT	 			; TODO -- Generisch maken
+	
+	@@row_loop:			; voor alle rijen in sprite	
+		mov ecx, BALLWIDTH		; aantal bytes voor 'rep movsb'		; TODO -- Generisch maken
+		rep movsb					; bytes van huidige rij in sprite kopiëren naar videogeheugen
+			
+		add edi, SCRWIDTH-BALLWIDTH	; naar volgende rij gaan in videogeheugen
+		dec edx
+		jnz @@row_loop
+		
+	ret
+ENDP drawObject
+
 ; oproep call print_array, PADDLESIZE, offset paddle_array
