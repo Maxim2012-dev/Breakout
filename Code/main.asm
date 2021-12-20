@@ -207,6 +207,7 @@ ENDP movePaddleRight
 
 ;; SPELLOGICA
 PROC gamelogistic
+	USES eax
 
 	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
 	cmp al, 1
@@ -215,13 +216,18 @@ PROC gamelogistic
 	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
 	cmp al, 1
 	je @@moveLeft
+	
+	jmp @@end
 		
-	@@moveRight:
-		call movePaddleRight
+@@moveRight:
+	call movePaddleRight
+	jmp @@end
 		
-	@@moveLeft:
-		call movePaddleLeft
- 
+@@moveLeft:
+	call movePaddleLeft
+	
+@@end:
+	ret
 ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
