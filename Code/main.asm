@@ -206,11 +206,12 @@ ENDP movePaddleLeft
 PROC movePaddleRight
 	USES eax, ebx, ecx, edx
 	mov ebx, offset paddle_object
-	movzx ecx, [ebx + Paddle.x]
 	mov eax, SCRWIDTH
 	sub eax, PADDLEWIDTH
-	mov edx, CELLWIDTH
-	div edx
+	mov ecx, CELLWIDTH
+	xor edx, edx
+	div ecx
+	movzx ecx, [ebx + Paddle.x]
 	inc ecx
 	cmp ecx, eax
 	jg @@end
@@ -361,6 +362,7 @@ PROC main
 	;; ------ GAME LOOP ------
 @@gameloop:
 	
+	;call wait_VBLANK
 	call fillBackground, 0
 	call gamelogistic
 	call drawlogistic
