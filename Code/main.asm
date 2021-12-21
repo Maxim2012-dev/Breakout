@@ -50,10 +50,10 @@ PROC waitForSpecificKeystroke
 	ARG 	@@key:byte
 	USES 	eax
 
-	@@waitForKeystroke:
-		mov	ah,00h
-		int	16h
-		cmp	al,[@@key]
+@@waitForKeystroke:
+	mov	ah,00h
+	int	16h
+	cmp	al,[@@key]
 	jne	@@waitForKeystroke
 
 	ret
@@ -195,28 +195,44 @@ PROC movePaddleLeft
 	USES eax, ebx
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
-	dec eax
+	dec eax ; MISSCHIEN NOG VERBETEREN
 	cmp eax, 0
 	jl @@end
 	mov [ebx + Paddle.x], al
-	@@end:
+@@end:
 	ret
 ENDP movePaddleLeft	
 
 PROC movePaddleRight
-	USES eax, ebx, edx
+	USES eax, ebx, ecx, edx
 	mov ebx, offset paddle_object
-	movzx eax, [ebx + Paddle.x]
-	mov edx, SCRWIDTH
-	sub edx, PADDLEWIDTH
-	div edx, CELLWIDTH
-	inc eax
-	cmp eax, edx
+	movzx ecx, [ebx + Paddle.x]
+	mov eax, SCRWIDTH
+	sub eax, PADDLEWIDTH
+	mov edx, CELLWIDTH
+	div edx
+	inc ecx
+	cmp ecx, eax
 	jg @@end
-	mov [ebx + Paddle.x], al
-	@@end:
+	mov [ebx + Paddle.x], cl
+@@end:
 	ret
 ENDP movePaddleRight
+
+; PROC movePaddleRight
+	; USES eax, ebx, edx
+	; mov ebx, offset paddle_object
+	; movzx eax, [ebx + Paddle.x]
+	; mov edx, SCRWIDTH
+	; sub edx, PADDLEWIDTH
+	; div edx, CELLWIDTH
+	; inc eax
+	; cmp eax, edx
+	; jg @@end
+	; mov [ebx + Paddle.x], al
+	; @@end:
+	; ret
+; ENDP movePaddleRight
 
 ;; SPELLOGICA
 PROC gamelogistic
@@ -232,21 +248,21 @@ PROC gamelogistic
 	
 	jmp @@end
 		
-	@@moveRight:
-		call movePaddleRight
-		jmp @@end
+@@moveRight:
+	call movePaddleRight
+	jmp @@end
 		
-	@@moveLeft:
-		call movePaddleLeft
+@@moveLeft:
+	call movePaddleLeft
 	
-	@@end:
-		ret
+@@end:
+	ret
 ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
 PROC drawObject
 	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword, @@WIDTH:byte, @@HEIGHT:byte	; x en y coördinaat in cellen, breedte en hoogte in pixels
-	USES eax, ebx, ecx, esi, edi
+	USES eax, ebx, ecx, edx, esi, edi ; MOGELIJKE VERBETERING EDX WORDT SOWIESO GEBRUIKT DOOR MUL, MAAR DOOR NIETS ANDERS DUS MISSCHIEN EEN ANDERE REGISTER DOOR DEZE VERVANGEN ZODAT IK ÉÉN REGISTER MINDER GEBRUIK
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
 	; begin: positie van eerste pixel op scherm bepalen (omzetting van cellen naar pixels, x en y hebben als "eenheid" cellen)
@@ -265,12 +281,12 @@ PROC drawObject
 	sub eax, ebx 					; eax in row_loop gebruikt om naar de volgende rij te gaan in het videogeheugen
 	movzx ebx, [@@HEIGHT] 			; ebx bepaalt in de volgende loop hoeveel keer we nog moeten itereren
 	
-	@@row_loop:						; voor alle rijen in sprite	
-		movzx ecx, [@@WIDTH]		; aantal bytes/kleurindexen voor 'rep movsb'
-		rep movsb					; bytes/kleurindexen van huidige rij in sprite kopiëren naar videogeheugen
-		add edi, eax				; naar volgende rij gaan in videogeheugen
-		dec ebx
-		jnz @@row_loop
+@@row_loop:						; voor alle rijen in sprite	
+	movzx ecx, [@@WIDTH]		; aantal bytes/kleurindexen voor 'rep movsb'
+	rep movsb					; bytes/kleurindexen van huidige rij in sprite kopiëren naar videogeheugen
+	add edi, eax				; naar volgende rij gaan in videogeheugen
+	dec ebx
+	jnz @@row_loop
 		
 	ret
 ENDP drawObject
@@ -336,18 +352,18 @@ PROC main
 	call readChunk, STONESIZE, offset rstone_array
 	call closeFile
 	
-	;call drawlogistic
+	call drawlogistic
 	
 	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
 	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
 	 
 	;; ------ GAME LOOP ------
-	@@gameloop:
-		
-		call fillBackground, 0
-		call gamelogistic
-		call drawlogistic
+@@gameloop:
+	
+	call fillBackground, 0
+	call gamelogistic
+	call drawlogistic
 		
 	loop @@gameloop
 	
