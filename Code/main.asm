@@ -21,6 +21,10 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 ; -------------------------------------------------------------------
 CODESEG
 
+; # TODO LIJST #
+; - extra veld ball zodat deze in het begin met de paddle beweegt
+; - 
+
 ; video mode aanpassen
 PROC setVideoMode
 	ARG @@VM:byte
@@ -323,7 +327,7 @@ PROC main
 	call readChunk, STONESIZE, offset rstone_array
 	call closeFile
 	
-	call drawlogistic
+	;call drawlogistic
 	
 	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
