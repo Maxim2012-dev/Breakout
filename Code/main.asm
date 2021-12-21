@@ -175,9 +175,9 @@ STRUC Ball
 	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
-	active		db 0
-	x_sense		db 0
-	y_sense		db 0
+	active		db 0 ; 0 bal beweegt nog niet alleen (beweegt dus samen met paddle), 1 bal beweegt wel alleen
+	x_sense		db 0 ; 0 bal weweegt naar links, 1 bal beweegt naar rechts
+	y_sense		db 0 ; 0 bal beweegt naar boven, 1 bal beweegt naar beneden
 ENDS Ball
 
 STRUC Paddle
