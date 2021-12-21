@@ -175,6 +175,9 @@ STRUC Ball
 	y			db 0
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
+	active		db 0
+	x_sense		db 0
+	y_sense		db 0
 ENDS Ball
 
 STRUC Paddle
@@ -362,7 +365,7 @@ PROC main
 	;; ------ GAME LOOP ------
 @@gameloop:
 	
-	;call wait_VBLANK
+	call wait_VBLANK
 	call fillBackground, 0
 	call gamelogistic
 	call drawlogistic
