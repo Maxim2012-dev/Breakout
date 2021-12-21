@@ -196,16 +196,25 @@ PROC movePaddleLeft
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
 	dec eax
+	cmp eax, 0
+	jl @@end
 	mov [ebx + Paddle.x], al
+	@@end:
 	ret
 ENDP movePaddleLeft	
 
 PROC movePaddleRight
-	USES eax, ebx
+	USES eax, ebx, edx
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
+	mov edx, SCRWIDTH
+	sub edx, PADDLEWIDTH
+	div edx, CELLWIDTH
 	inc eax
+	cmp eax, edx
+	jg @@end
 	mov [ebx + Paddle.x], al
+	@@end:
 	ret
 ENDP movePaddleRight
 
@@ -223,15 +232,15 @@ PROC gamelogistic
 	
 	jmp @@end
 		
-@@moveRight:
-	call movePaddleRight
-	jmp @@end
+	@@moveRight:
+		call movePaddleRight
+		jmp @@end
 		
-@@moveLeft:
-	call movePaddleLeft
+	@@moveLeft:
+		call movePaddleLeft
 	
-@@end:
-	ret
+	@@end:
+		ret
 ENDP gamelogistic 
 
 ; ; Generische tekenprocedure die struct verwacht
