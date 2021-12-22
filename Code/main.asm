@@ -271,6 +271,29 @@ PROC moveBallRight
 ENDP moveBallRight
 
 PROC moveBall
+
+; TODO:
+
+; ; VOOR LATER: NIET VERGETEN OM BIJ ELKE BEWEGINGSRICHTING TE CHECKEN OF DE BALL EEN STONE RAAKT!!!
+
+; ; ; DOWN:
+; ; checken of de bal zich onder de denkbeeldige lijn bevindt (zie oranje lijn tekening)
+		; ; => zo ja, check of deze zich juist boven de paddle bevindt
+				; ; => zo ja, check of er een match is tussen het bereik van da ball en de paddle volgens de x-as
+						; ; => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu terug naar boven
+						; ; => zo nee, beweeg de ball volgens zijn huidige richting 
+				; ; => zo nee (dan bevindt deze zich onder of naast de paddle), check of deze de onderkant van de scherm raakt 
+						; ; => zo ja, decrement het aantal levens van de bal en check of het aantal levens = 0
+								; ; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
+								; ; => zo nee, plaats de paddle en de ball weer op hun startpositie
+
+; ; ; UP:
+; ; checken of de bal de bovenkant raakt => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu naar beneden
+; ; ; LEFT:
+; ; checken of de bal de linkerkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar rechts
+; ; ; RIGHT:
+; ; checken of de bal de rechterkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar links
+
 	USES eax, ebx, ecx, edx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.active]	;; Als bal niet inactief is, dan skippen we de beweeglogica
