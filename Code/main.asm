@@ -22,7 +22,6 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - extra veld ball zodat deze in het begin met de paddle beweegt
 ; - 
 
 ; video mode aanpassen
@@ -190,7 +189,7 @@ STRUC Stone
 ENDS Stone
 
 PROC movePaddleLeft
-	USES eax, ebx, edx
+	USES eax, ebx
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
 	cmp eax, 0
@@ -207,17 +206,15 @@ PROC movePaddleLeft
 ENDP movePaddleLeft	
 
 PROC movePaddleRight
-	USES eax, ebx, ecx, edx
+	USES eax, ebx
 	mov ebx, offset paddle_object
-	mov eax, BOARDWIDTH
-	mov ecx, PADDLEWIDTHCELL
-	sub eax, ecx 						; grootst mogelijke x-waarde voor het paddle-object 
-	movzx ecx, [ebx + Paddle.x]
-	cmp ecx, eax
+	movzx eax, [ebx + Paddle.x]
+	cmp eax, BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
 	je SHORT @@end
-	inc ecx
-	mov [ebx + Paddle.x], cl
-	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
+	inc eax
+	mov [ebx + Paddle.x], al
+	; checken of de bal mee moet bewegen
+	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.active]
 	cmp eax, 1
 	je SHORT @@end
@@ -375,10 +372,10 @@ PROC gamelogistic
 	ret
 ENDP gamelogistic 
 
-; ; Generische tekenprocedure die struct verwacht
+;; Generische tekenprocedure
 PROC drawObject
 	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword, @@WIDTH:byte, @@HEIGHT:byte	; x en y coördinaat in cellen, breedte en hoogte in pixels
-	USES eax, ebx, ecx, edx, esi, edi ; MOGELIJKE VERBETERING EDX WORDT SOWIESO GEBRUIKT DOOR MUL, MAAR DOOR NIETS ANDERS DUS MISSCHIEN EEN ANDERE REGISTER DOOR DEZE VERVANGEN ZODAT IK ÉÉN REGISTER MINDER GEBRUIK
+	USES eax, ebx, ecx, edx, esi, edi
 	mov edi, VIDMEMADR
 	mov esi, [@@SPRITE]
 	; begin: positie van eerste pixel op scherm bepalen (omzetting van cellen naar pixels, x en y hebben als "eenheid" cellen)
@@ -425,41 +422,41 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
-PROC drawStones
-	USES eax, ebx, ecx, edx
-	mov ebx, offset stones_array
-	mov ecx, COLSTONES*ROWSTONES
-@@drawLoop:
-	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
-	push ecx				; counter op stack
-	xor edx, edx
-	movzx eax, [ebx + Stone.index]
-	mov ecx, COLSTONES
-	div ecx
-	mov eax, STONEWIDTHCELL
-	mul edx
-	add eax, STONESSTARTX
-	push eax				; x-coördinaat op stack
-	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
-	xor edx, edx
-	movzx eax, [ebx + Stone.index]
-	div ecx
-	mov edx, STONEHEIGHTCELL
-	mul edx
-	add eax, STONESSTARTY
-	pop edx
-	call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
-	pop ecx
-	loop @@drawLoop
-	ret
-ENDP drawStones
+; PROC drawStones
+	; USES eax, ebx, ecx, edx
+	; mov ebx, offset stones_array
+	; mov ecx, COLSTONES*ROWSTONES
+; @@drawLoop:
+	; ; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	; push ecx				; counter op stack
+	; xor edx, edx
+	; movzx eax, [ebx + Stone.index]
+	; mov ecx, COLSTONES
+	; div ecx
+	; mov eax, STONEWIDTHCELL
+	; mul edx
+	; add eax, STONESSTARTX
+	; push eax				; x-coördinaat op stack
+	; ; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	; xor edx, edx
+	; movzx eax, [ebx + Stone.index]
+	; div ecx
+	; mov edx, STONEHEIGHTCELL
+	; mul edx
+	; add eax, STONESSTARTY
+	; pop edx
+	; call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	; pop ecx
+	; loop @@drawLoop
+	; ret
+; ENDP drawStones
 
 ;; Indexen juist zetten
 PROC initStones
 	USES eax, ebx, ecx
 	mov ecx, COLSTONES*ROWSTONES
-	xor eax, eax
 	mov ebx, offset stones_array
+	xor eax, eax
 @@arrayLoop:	
 	mov [ebx + Stone.index], al
 	add ebx, 2					; naar volgende struct gaan

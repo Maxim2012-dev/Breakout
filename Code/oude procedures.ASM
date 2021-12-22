@@ -58,7 +58,7 @@ PROC printStones
 @@littleloop:
 	movzx eax, [ebx + Stone.index]
 	call print_byte, eax
-	add ebx, 4
+	add ebx, 2
 	loop @@littleloop
 	ret
 ENDP printStones
