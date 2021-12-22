@@ -227,7 +227,7 @@ PROC moveBallDown
 	USES eax, ebx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.y]
-	inc eax 						;; Het checken op spelranden doen we in moveBall
+	inc eax
 	mov [ebx + Ball.y], al
 	ret
 ENDP moveBallDown
@@ -236,25 +236,25 @@ PROC moveBallUp
 	USES eax, ebx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.y]
-	dec eax 						;; Het checken op spelranden doen we in moveBall
+	dec eax 
 	mov [ebx + Ball.y], al
 	ret
 ENDP moveBallUp
 
-PROC moveBallLeft
+PROC moveBallLeft ; simpele versie van move, gebruikt door paddle in het begin van de spel
 	USES eax, ebx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.x]
-	dec eax 						;; Het checken op spelranden doen we in moveBall
+	dec eax
 	mov [ebx + Ball.x], al
 	ret
 ENDP moveBallLeft
 
-PROC moveBallRight
+PROC moveBallRight ; simpele versie van move, gebruikt door paddle in het begin van de spel
 	USES eax, ebx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.x]
-	inc eax							;; Het checken op spelranden doen we in moveBall
+	inc eax
 	mov [ebx + Ball.x], al
 	ret
 ENDP moveBallRight
@@ -541,7 +541,7 @@ PROC main
 		
 	loop @@gameloop
 	
-	call	waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
+	call waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
 ENDP main
 	  
