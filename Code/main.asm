@@ -441,34 +441,35 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
-; PROC drawStones
-	; USES eax, ebx, ecx, edx
-	; mov ebx, offset stones_array
-	; mov ecx, COLSTONES*ROWSTONES
-; @@drawLoop:
-	; ; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
-	; push ecx				; counter op stack
-	; xor edx, edx
-	; movzx eax, [ebx + Stone.index]
-	; mov ecx, COLSTONES
-	; div ecx
-	; mov eax, STONEWIDTHCELL
-	; mul edx
-	; add eax, STONESSTARTX
-	; push eax				; x-coördinaat op stack
-	; ; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
-	; xor edx, edx
-	; movzx eax, [ebx + Stone.index]
-	; div ecx
-	; mov edx, STONEHEIGHTCELL
-	; mul edx
-	; add eax, STONESSTARTY
-	; pop edx
-	; call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
-	; pop ecx
-	; loop @@drawLoop
-	; ret
-; ENDP drawStones
+PROC drawStones
+	USES eax, ebx, ecx, edx
+	mov ebx, offset stones_array
+	mov ecx, COLSTONES*ROWSTONES
+@@drawLoop:
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	push ecx				; counter op stack
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	mov ecx, COLSTONES
+	div ecx
+	mov eax, STONEWIDTHCELL
+	mul edx
+	add eax, STONESSTARTX
+	push eax				; x-coördinaat op stack
+	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	div ecx
+	mov edx, STONEHEIGHTCELL
+	mul edx
+	add eax, STONESSTARTY
+	pop edx
+	call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx					; counter van stack halen
+	add ebx, 2				; naar volgende struct gaan
+	loop @@drawLoop
+	ret
+ENDP drawStones
 
 ;; Indexen juist zetten
 PROC initStones
@@ -485,6 +486,7 @@ PROC initStones
 ENDP initStones
 	
 PROC drawlogistic
+	call drawStones 
 	call drawBall
 	call drawPaddle
 	ret
