@@ -468,7 +468,7 @@ PROC drawStones
 	mov ecx, COLSTONES*ROWSTONES
 @@drawLoop:
 	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
-	push ecx				; counter op stack
+	push ecx				; counter OP STACK
 	xor edx, edx
 	movzx eax, [ebx + Stone.index]
 	mov ecx, COLSTONES
@@ -476,21 +476,20 @@ PROC drawStones
 	mov eax, STONEWIDTHCELL
 	mul edx
 	add eax, STONESSTARTX
-	push eax				; x-coördinaat op stack
+	push eax				; x-coördinaat OP STACK
 	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
 	xor edx, edx
 	movzx eax, [ebx + Stone.index]
 	div ecx
 	mov edx, STONEHEIGHTCELL
 	mul edx
-	add eax, STONESSTARTY
-	pop edx
-	pop ecx
-	push eax
-	call determineColor, ecx
-	pop eax
-	call drawObject, edx, eax, offset rstone_array, STONEWIDTHPX, STONEHEIGHTPX
-	pop ecx					; counter van stack halen
+	add eax, STONESSTARTY   ; eax bevat y-coördinaat
+	pop edx					; x-coördinaat VAN STACK
+	pop ecx					; counter VAN STACK
+	push ebx 				; huidige struct OP STACK
+	call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
+	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
+	pop ebx					; huidige struct VAN STACK
 	add ebx, 2				; naar volgende struct gaan
 	loop @@drawLoop
 	ret
