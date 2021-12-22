@@ -8,28 +8,34 @@ VIDMEMADR EQU 0A0000h	; videogeheugenadres
 SCRWIDTH EQU 320		; schermbreedte (in pixels)
 SCRHEIGHT EQU 200		; schermhoogte
 
-BALLWIDTH EQU 8 									; breedte van sprite (in pixels)
-BALLHEIGHT EQU 8 									; hoogte van sprite (in pixels)
-BALLSIZE EQU BALLWIDTH*BALLHEIGHT 					; (in pixels)
-BALLSTARTX EQU (SCRWIDTH-BALLWIDTH) / (2*CELLWIDTH) ; startpositie x-coördinaat (in cellen) 
-BALLSTARTY EQU PADDLESTARTY - BALLHEIGHT/CELLHEIGHT ; startpositie y-coördinaat (in cellen)
+BALLWIDTHPX 	EQU 8 										; breedte van sprite (in pixels)
+BALLHEIGHTPX 	EQU 8 										; hoogte van sprite (in pixels)
+BALLSIZEPX 		EQU BALLWIDTHPX*BALLHEIGHTPX 				; (in pixels)
+BALLWIDTHCELL 	EQU BALLWIDTHPX/CELLWIDTH
+BALLHEIGHTCELL 	EQU BALLHEIGHTPX/CELLHEIGHT
+BALLSTARTX 		EQU (BOARDWIDTH-BALLWIDTHCELL)/2			; startpositie x-coördinaat (in cellen)
+BALLSTARTY 		EQU PADDLESTARTY - BALLHEIGHTCELL			; startpositie y-coördinaat (in cellen)
 
-PADDLEWIDTH EQU 40 											; breedte van sprite (in pixels)
-PADDLEHEIGHT EQU 8 											; hoogte van sprite (in pixels)
-PADDLESIZE EQU PADDLEWIDTH*PADDLEHEIGHT 					; (in pixels)
-PADDLESTARTX EQU (SCRWIDTH-PADDLEWIDTH) / (2*CELLWIDTH) 	; startpositie x-coördinaat (in cellen) 
-PADDLESTARTY EQU (SCRHEIGHT-PADDLEHEIGHT)/CELLHEIGHT - 4 	; startpositie y-coördinaat (in cellen)
+PADDLEWIDTHPX 		EQU 40 										; breedte van sprite (in pixels)
+PADDLEHEIGHTPX 		EQU 8 										; hoogte van sprite (in pixels)
+PADDLESIZEPX		EQU PADDLEWIDTHPX*PADDLEHEIGHTPX 			; (in pixels)
+PADDLEWIDTHCELL 	EQU PADDLEWIDTHPX/CELLWIDTH
+PADDLEHEIGHTCELL	EQU PADDLEHEIGHTPX/CELLHEIGHT
+PADDLESTARTX 		EQU (BOARDWIDTH-PADDLEWIDTHCELL)/2		 	; startpositie x-coördinaat (in cellen) 
+PADDLESTARTY 		EQU BOARDHEIGHT-PADDLEHEIGHTCELL-4			; startpositie y-coördinaat (in cellen)
 
-STONEWIDTH EQU 32	; breedte van sprite (in pixels)
-STONEHEIGHT EQU 12 	; hoogte van sprite (in pixels)
-STONESIZE EQU STONEWIDTH*STONEHEIGHT
+STONEWIDTHPX 	EQU 32											; breedte van sprite (in pixels)
+STONEHEIGHTPX 	EQU 12 											; hoogte van sprite (in pixels)
+STONESIZEPX 	EQU STONEWIDTHPX*STONEHEIGHTPX
+STONEWIDTHCELL	EQU STONEWIDTHPX/CELLWIDTH
+STONEHEIGHTCELL EQU STONEHEIGHTPX/CELLHEIGHT
 ; coördinaten van eerste steen 
-STONESSTARTX EQU (SCRWIDTH - COLSTONES*STONEWIDTH) / (2*CELLWIDTH) ; startpositie x-coördinaat (in cellen) 
-STONESSTARTY EQU 4 	; startpositie y-coördinaat (in cellen) 
-COLSTONES EQU 6
-ROWSTONES EQU 6
-NRCOLOURS EQU 3
-ROWSPERCOLOUR EQU ROWSTONES/NRCOLOURS
+STONESSTARTX 	EQU (BOARDWIDTH - COLSTONES*STONEWIDTHCELL)/2 	; startpositie x-coördinaat (in cellen) 
+STONESSTARTY 	EQU 4 											; startpositie y-coördinaat (in cellen) 
+COLSTONES 		EQU 6
+ROWSTONES 		EQU 6
+NRCOLOURS 		EQU 3
+ROWSPERCOLOUR 	EQU ROWSTONES/NRCOLOURS
 
 ;; 1 cel wordt voorgesteld als 4 pixels x 4 pixels.
 CELLWIDTH EQU 4		; celbreedte

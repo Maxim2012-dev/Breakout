@@ -173,8 +173,6 @@ ENDP fillBackground
 STRUC Ball
 	x			db 0 ; (in cellen)
 	y			db 0
-	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
-	height		db BALLHEIGHT/CELLHEIGHT
 	active		db 0 ; 0 bal beweegt nog niet alleen (beweegt dus samen met paddle), 1 bal beweegt wel alleen
 	x_sense		db LEFT
 	y_sense		db UP
@@ -183,15 +181,11 @@ ENDS Ball
 STRUC Paddle
 	x 			db 0
 	y 			db 0
-	breadth 	db PADDLEWIDTH/CELLWIDTH ; aangezien width een keyword is, gebruiken we breadth
-	height 		db PADDLEHEIGHT/CELLHEIGHT
 	health 		db 3 
 ENDS Paddle
 
 STRUC Stone
 	index 			db 0	; index in array
-	breadth			db STONEWIDTH/CELLWIDTH
-	height			db STONEHEIGHT/CELLHEIGHT
 	alive			db 1
 ENDS Stone
 
@@ -216,7 +210,7 @@ PROC movePaddleRight
 	USES eax, ebx, ecx, edx
 	mov ebx, offset paddle_object
 	mov eax, BOARDWIDTH
-	movzx ecx, [ebx + Paddle.breadth]
+	mov ecx, PADDLEWIDTHCELL
 	sub eax, ecx 						; grootst mogelijke x-waarde voor het paddle-object 
 	movzx ecx, [ebx + Paddle.x]
 	cmp ecx, eax
@@ -418,7 +412,7 @@ PROC drawBall
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.x]
 	movzx ebx, [ebx + Ball.y]
-	call drawObject, eax, ebx, offset ball_array, BALLWIDTH, BALLHEIGHT
+	call drawObject, eax, ebx, offset ball_array, BALLWIDTHPX, BALLHEIGHTPX
 	ret
 ENDP drawBall
 
@@ -427,22 +421,22 @@ PROC drawPaddle
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
 	movzx ebx, [ebx + Paddle.y]
-	call drawObject, eax, ebx, offset paddle_array, PADDLEWIDTH, PADDLEHEIGHT
+	call drawObject, eax, ebx, offset paddle_array, PADDLEWIDTHPX, PADDLEHEIGHTPX
 	ret
 ENDP drawPaddle
 
-PROC drawStones
-	USES eax, ebx, ecx, edx
-	mov ebx, offset stones_array
-	mov ecx, COLSTONES*ROWSTONES
-	mov eax, STONESSTARTX
-	mov edx, STONESSTARTY
-@@drawLoop:
-	call drawObject, eax, edx, offset bstone_array, STONEWIDTH, STONEHEIGHT
-	; TODO
-	loop @@drawLoop
-	ret
-ENDP drawStones
+; PROC drawStones
+	; USES eax, ebx, ecx, edx
+	; mov ebx, offset stones_array
+	; mov ecx, COLSTONES*ROWSTONES
+	; mov eax, STONESSTARTX
+	; mov edx, STONESSTARTY
+; @@drawLoop:
+	; call drawObject, eax, edx, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	; ; TODO
+	; loop @@drawLoop
+	; ret
+; ENDP drawStones
 
 ;; Indexen juist zetten
 PROC initStones
@@ -452,7 +446,7 @@ PROC initStones
 	mov ebx, offset stones_array
 @@arrayLoop:	
 	mov [ebx + Stone.index], al
-	add ebx, 4					; naar volgende struct gaan
+	add ebx, 2					; naar volgende struct gaan
 	inc eax
 	loop @@arrayLoop
 	ret
@@ -477,23 +471,23 @@ PROC main
 	call __keyb_installKeyboardHandler
 	
 	call openFile, offset ball_file
-	call readChunk, BALLSIZE, offset ball_array
+	call readChunk, BALLSIZEPX, offset ball_array
 	call closeFile
 	
 	call openFile, offset paddle_file
-	call readChunk, PADDLESIZE, offset paddle_array
+	call readChunk, PADDLESIZEPX, offset paddle_array
 	call closeFile
 	
 	call openFile, offset bstone_file
-	call readChunk, STONESIZE, offset bstone_array
+	call readChunk, STONESIZEPX, offset bstone_array
 	call closeFile
 	
 	call openFile, offset gstone_file
-	call readChunk, STONESIZE, offset gstone_array
+	call readChunk, STONESIZEPX, offset gstone_array
 	call closeFile
 	
 	call openFile, offset rstone_file
-	call readChunk, STONESIZE, offset rstone_array
+	call readChunk, STONESIZEPX, offset rstone_array
 	call closeFile
 	
 	call initStones
@@ -545,12 +539,12 @@ DATASEG
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
 	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
-	ball_array db BALLSIZE dup (?)
-	paddle_array db PADDLESIZE dup (?)
-	bstone_array db STONESIZE dup (?)
-	gstone_array db STONESIZE dup (?)
-	rstone_array db STONESIZE dup (?)
-	;ystone_array db STONESIZE dup (?)
+	ball_array db BALLSIZEPX dup (?)
+	paddle_array db PADDLESIZEPX dup (?)
+	bstone_array db STONESIZEPX dup (?)
+	gstone_array db STONESIZEPX dup (?)
+	rstone_array db STONESIZEPX dup (?)
+	;ystone_array db STONESIZEPX dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
