@@ -176,7 +176,7 @@ STRUC Ball
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 	active		db 0 ; 0 bal beweegt nog niet alleen (beweegt dus samen met paddle), 1 bal beweegt wel alleen
-	x_sense		db 0 ; 0 bal weweegt naar links, 1 bal beweegt naar rechts
+	x_sense		db 0 ; 0 bal beweegt naar links, 1 bal beweegt naar rechts
 	y_sense		db 0 ; 0 bal beweegt naar boven, 1 bal beweegt naar beneden
 ENDS Ball
 
@@ -195,13 +195,18 @@ STRUC Stone
 ENDS Stone	 
 
 PROC movePaddleLeft
-	USES eax, ebx
+	USES eax, ebx, edx
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
 	dec eax ; MISSCHIEN NOG VERBETEREN
 	cmp eax, 0
 	jl @@end
 	mov [ebx + Paddle.x], al
+	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
+	movzx eax, [ebx + Ball.active]
+	cmp eax, 1
+	je @@end
+	call moveBallLeft
 @@end:
 	ret
 ENDP movePaddleLeft	
@@ -219,9 +224,49 @@ PROC movePaddleRight
 	cmp ecx, eax
 	jg @@end
 	mov [ebx + Paddle.x], cl
+	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
+	movzx eax, [ebx + Ball.active]
+	cmp eax, 1
+	je @@end
+	call moveBallRight
 @@end:
 	ret
 ENDP movePaddleRight
+
+PROC moveBallLeft					;; Lijkt wel heel erg op movePaddleLeft
+	USES eax, ebx
+	mov ebx, offset ball_object
+	movzx eax, [ebx + Ball.x]
+	dec eax 
+	cmp eax, 0
+	jl @@end
+	mov [ebx + Ball.x], al
+@@end:	
+	ret
+ENDP moveBallLeft
+
+PROC moveBallRight					;; Lijkt wel heel erg op movePaddleRight
+	USES eax, ebx, ecx, edx
+	mov ebx, offset ball_object
+	mov eax, SCRWIDTH
+	sub eax, BALLWIDTH
+	mov ecx, CELLWIDTH
+	xor edx, edx
+	div ecx
+	movzx ecx, [ebx + Ball.x]
+	inc ecx
+	cmp ecx, eax
+	jg @@end
+	mov [ebx + Ball.x], cl
+@@end:
+	ret
+ENDP moveBallRight
+
+PROC moveBall
+	USES eax, ebx, ecx, edx
+	
+	ret
+ENDP moveBall	
 
 ; PROC movePaddleRight
 	; USES eax, ebx, edx
@@ -240,7 +285,11 @@ ENDP movePaddleRight
 
 ;; SPELLOGICA
 PROC gamelogistic
-	USES eax
+	USES eax, ebx
+
+	mov al, [offset __keyb_keyboardState + 39h]		; state van spatiebalk bijhouden 
+	cmp al, 1										; (kan misschien beter, aangezien deze later ook nog kan getriggerd worden)
+	je @@makeBallActive
 
 	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
 	cmp al, 1
@@ -250,12 +299,16 @@ PROC gamelogistic
 	cmp al, 1
 	je @@moveLeft
 	
+	call moveBall		; moet sowieso in elke iteratie opgeroepen worden
 	jmp @@end
-		
+	
+@@makeBallActive:
+	mov ebx, offset ball_object
+	mov [ebx + Ball.active], 1		; op actief zetten
+	jmp @@end
 @@moveRight:
 	call movePaddleRight
 	jmp @@end
-		
 @@moveLeft:
 	call movePaddleLeft
 	
