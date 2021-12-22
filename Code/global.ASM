@@ -42,8 +42,8 @@ BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 
 LEFT EQU 0
 RIGHT EQU 1
-UP EQU 2
-DOWN EQU 3
+UP EQU 0
+DOWN EQU 1
 
 ; -------------------------------------------------------------------
 ; CODE

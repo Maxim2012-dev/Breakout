@@ -84,7 +84,7 @@ PROC openFile ; de offset van een variabele neemt 32 bits in beslag
 	mov ah, 3dh ; mode om een bestand te openen
 	int 21h
 	
-	jnc @@no_error ; carry flag is set if error occurs, indien de CF dus niet geactieveerd is, is er geen error en springt men naar de no_error label
+	jnc SHORT @@no_error ; carry flag is set if error occurs, indien de CF dus niet geactieveerd is, is er geen error en springt men naar de no_error label
 
 	; Print string.
 	call setVideoMode, 03h ; plaatst mode weer in text mode 
@@ -108,7 +108,7 @@ PROC closeFile
 	mov ah, 3Eh ; mode om een bestand te sluiten
 	int 21h
 	
-	jnc @@no_error ; carry flag is set if error occurs
+	jnc SHORT @@no_error ; carry flag is set if error occurs
 
 	call setVideoMode, 03h
 	mov  ah, 09h
@@ -132,7 +132,7 @@ PROC readChunk
 	mov ah, 3fh								
 	int 21h
 	
-	jnc @@no_error  	
+	jnc SHORT @@no_error  	
 	
 	call setVideoMode, 03h
 	mov  ah, 09h
@@ -176,8 +176,8 @@ STRUC Ball
 	breadth		db BALLWIDTH/CELLWIDTH ; (in cellen)
 	height		db BALLHEIGHT/CELLHEIGHT
 	active		db 0 ; 0 bal beweegt nog niet alleen (beweegt dus samen met paddle), 1 bal beweegt wel alleen
-	x_sense		db 0 ; 0 bal beweegt naar links, 1 bal beweegt naar rechts
-	y_sense		db 0 ; 0 bal beweegt naar boven, 1 bal beweegt naar beneden
+	x_sense		db LEFT
+	y_sense		db UP
 ENDS Ball
 
 STRUC Paddle
@@ -192,6 +192,7 @@ STRUC Stone
 	index_position 	db 0		; index in grid
 	breadth			db STONEWIDTH/CELLWIDTH
 	height			db STONEHEIGHT/CELLHEIGHT
+	alive			db 1
 ENDS Stone	 
 
 PROC movePaddleLeft
@@ -200,12 +201,12 @@ PROC movePaddleLeft
 	movzx eax, [ebx + Paddle.x]
 	dec eax ; MISSCHIEN NOG VERBETEREN
 	cmp eax, 0
-	jl @@end
+	jl SHORT @@end
 	mov [ebx + Paddle.x], al
 	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
 	movzx eax, [ebx + Ball.active]
 	cmp eax, 1
-	je @@end
+	je SHORT @@end
 	call moveBallLeft
 @@end:
 	ret
@@ -222,12 +223,12 @@ PROC movePaddleRight
 	movzx ecx, [ebx + Paddle.x]
 	inc ecx
 	cmp ecx, eax
-	jg @@end
+	jg SHORT @@end
 	mov [ebx + Paddle.x], cl
 	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
 	movzx eax, [ebx + Ball.active]
 	cmp eax, 1
-	je @@end
+	je SHORT @@end
 	call moveBallRight
 @@end:
 	ret
@@ -274,26 +275,26 @@ PROC moveBall
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.active]	;; Als bal niet inactief is, dan skippen we de beweeglogica
 	cmp al, 0
-	jne @@end
+	je @@end
 	
 	movzx eax, [ebx + Ball.x_sense]
 	cmp al, 0
 	je @@yCheckx0
-@@yCheckx1
+@@yCheckx1:
 	call moveBallRight
 	movzx eax, [ebx + Ball.y_sense]
 	cmp al, 0
 	je @@up
 	call moveBallDown
 	jmp SHORT @@end
-@@yCheckx0
+@@yCheckx0:
 	call moveBallLeft
 	movzx eax, [ebx + Ball.y_sense]
 	cmp al, 0
 	je @@up
 	call moveBallDown
 	jmp SHORT @@end
-@@up
+@@up:
 	call moveBallUp
 	jmp SHORT @@end
 	
@@ -310,22 +311,7 @@ PROC moveBall
 ;; Als de bal dan de paddle raakt, dan moet y_sense op 0 gezet worden	
 @@end:
 	ret
-ENDP moveBall	
-
-; PROC movePaddleRight
-	; USES eax, ebx, edx
-	; mov ebx, offset paddle_object
-	; movzx eax, [ebx + Paddle.x]
-	; mov edx, SCRWIDTH
-	; sub edx, PADDLEWIDTH
-	; div edx, CELLWIDTH
-	; inc eax
-	; cmp eax, edx
-	; jg @@end
-	; mov [ebx + Paddle.x], al
-	; @@end:
-	; ret
-; ENDP movePaddleRight
+ENDP moveBall
 
 ;; SPELLOGICA
 PROC gamelogistic
@@ -333,26 +319,26 @@ PROC gamelogistic
 
 	mov al, [offset __keyb_keyboardState + 39h]		; state van spatiebalk bijhouden 
 	cmp al, 1										; (kan misschien beter, aangezien deze later ook nog kan getriggerd worden)
-	je @@makeBallActive
+	je SHORT @@makeBallActive
 
 	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
 	cmp al, 1
-	je @@moveRight
+	je SHORT @@moveRight
 		
 	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
 	cmp al, 1
-	je @@moveLeft
+	je SHORT @@moveLeft
 	
 	call moveBall		; moet sowieso in elke iteratie opgeroepen worden
-	jmp @@end
+	jmp SHORT @@end
 	
 @@makeBallActive:
 	mov ebx, offset ball_object
 	mov [ebx + Ball.active], 1		; op actief zetten
-	jmp @@end
+	jmp SHORT @@end
 @@moveRight:
 	call movePaddleRight
-	jmp @@end
+	jmp SHORT @@end
 @@moveLeft:
 	call movePaddleLeft
 	
