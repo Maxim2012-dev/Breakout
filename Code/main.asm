@@ -425,18 +425,34 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
-; PROC drawStones
-	; USES eax, ebx, ecx, edx
-	; mov ebx, offset stones_array
-	; mov ecx, COLSTONES*ROWSTONES
-	; mov eax, STONESSTARTX
-	; mov edx, STONESSTARTY
-; @@drawLoop:
-	; call drawObject, eax, edx, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
-	; ; TODO
-	; loop @@drawLoop
-	; ret
-; ENDP drawStones
+PROC drawStones
+	USES eax, ebx, ecx, edx
+	mov ebx, offset stones_array
+	mov ecx, COLSTONES*ROWSTONES
+@@drawLoop:
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	push ecx				; counter op stack
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	mov ecx, COLSTONES
+	div ecx
+	mov eax, STONEWIDTHCELL
+	mul edx
+	add eax, STONESSTARTX
+	push eax				; x-coördinaat op stack
+	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	div ecx
+	mov edx, STONEHEIGHTCELL
+	mul edx
+	add eax, STONESSTARTY
+	pop edx
+	call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx
+	loop @@drawLoop
+	ret
+ENDP drawStones
 
 ;; Indexen juist zetten
 PROC initStones
