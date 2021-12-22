@@ -22,7 +22,7 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - moveBallLeft en moveBallRight moet ook nog steeds globaal bestaan voor als mijn paddle in het begin beweegt
+; - ANDERE SPRITES AANPASSEN ZODAT DEZE OOK EEN VERDELING HEBBEN
 
 ; video mode aanpassen
 PROC setVideoMode
