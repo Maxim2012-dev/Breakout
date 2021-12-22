@@ -51,6 +51,18 @@ PROC print_array
 	ret
 ENDP print_array
 
+PROC printStones
+	USES eax, ebx, ecx
+	mov ecx, COLSTONES*ROWSTONES
+	mov ebx, offset stones_array
+@@littleloop:
+	movzx eax, [ebx + Stone.index]
+	call print_byte, eax
+	add ebx, 4
+	loop @@littleloop
+	ret
+ENDP printStones
+
 ; PROCEDURE DIE OBJECTEN TEKENT (WERKT NOG MET PIXELS)
 PROC drawObject ; TODO -- cellen omvormen naar pixels
 	ARG @@XPOS:byte, @@YPOS:byte, @@SPRITE:dword	; herriner: x- en y-coördinaat worden voorgesteld in cellen, omzetting naar pixels moet nog gebeuren
