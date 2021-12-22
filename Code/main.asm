@@ -193,15 +193,15 @@ STRUC Stone
 	breadth			db STONEWIDTH/CELLWIDTH
 	height			db STONEHEIGHT/CELLHEIGHT
 	alive			db 1
-ENDS Stone	 
+ENDS Stone
 
 PROC movePaddleLeft
 	USES eax, ebx, edx
 	mov ebx, offset paddle_object
 	movzx eax, [ebx + Paddle.x]
-	dec eax ; MISSCHIEN NOG VERBETEREN
 	cmp eax, 0
-	jl SHORT @@end
+	je SHORT @@end
+	dec eax
 	mov [ebx + Paddle.x], al
 	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
 	movzx eax, [ebx + Ball.active]
@@ -215,15 +215,13 @@ ENDP movePaddleLeft
 PROC movePaddleRight
 	USES eax, ebx, ecx, edx
 	mov ebx, offset paddle_object
-	mov eax, SCRWIDTH
-	sub eax, PADDLEWIDTH
-	mov ecx, CELLWIDTH
-	xor edx, edx
-	div ecx
+	mov eax, BOARDWIDTH
+	movzx ecx, [ebx + Paddle.breadth]
+	sub eax, ecx 						; grootst mogelijke x-waarde voor het paddle-object 
 	movzx ecx, [ebx + Paddle.x]
-	inc ecx
 	cmp ecx, eax
-	jg SHORT @@end
+	je SHORT @@end
+	inc ecx
 	mov [ebx + Paddle.x], cl
 	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
 	movzx eax, [ebx + Ball.active]
@@ -270,76 +268,92 @@ PROC moveBallRight
 	ret
 ENDP moveBallRight
 
-PROC moveBall
+; PROC moveBall
 
-; TODO:
+; ; TODO:
 
-; ; VOOR LATER: NIET VERGETEN OM BIJ ELKE BEWEGINGSRICHTING TE CHECKEN OF DE BALL EEN STONE RAAKT!!!
+; ;; STAP1: ball houdt enkel rekening met schermgrenzen
 
-; ; ; DOWN:
-; ; checken of de bal zich onder de denkbeeldige lijn bevindt (zie oranje lijn tekening)
-		; ; => zo ja, check of deze zich juist boven de paddle bevindt
-				; ; => zo ja, check of er een match is tussen het bereik van da ball en de paddle volgens de x-as
-						; ; => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu terug naar boven
-						; ; => zo nee, beweeg de ball volgens zijn huidige richting 
-				; ; => zo nee (dan bevindt deze zich onder of naast de paddle), check of deze de onderkant van de scherm raakt 
-						; ; => zo ja, decrement het aantal levens van de bal en check of het aantal levens = 0
-								; ; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
-								; ; => zo nee, plaats de paddle en de ball weer op hun startpositie
+; ; ; VOOR LATER: NIET VERGETEN OM BIJ ELKE BEWEGINGSRICHTING TE CHECKEN OF DE BALL EEN STONE RAAKT!!!
 
-; ; ; UP:
-; ; checken of de bal de bovenkant raakt => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu naar beneden
-; ; ; LEFT:
-; ; checken of de bal de linkerkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar rechts
-; ; ; RIGHT:
-; ; checken of de bal de rechterkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar links
+; ; ; ; DOWN:
+; ; ; checken of de bal zich onder de denkbeeldige lijn bevindt (zie oranje lijn tekening)
+		; ; ; => zo ja, check of deze zich juist boven de paddle bevindt
+				; ; ; => zo ja, check of er een match is tussen het bereik van da ball en de paddle volgens de x-as
+						; ; ; => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu terug naar boven
+						; ; ; => zo nee, beweeg de ball volgens zijn huidige richting 
+				; ; ; => zo nee (dan bevindt deze zich onder of naast de paddle), check of deze de onderkant van de scherm raakt 
+						; ; ; => zo ja, decrement het aantal levens van de bal en check of het aantal levens = 0
+								; ; ; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
+								; ; ; => zo nee, plaats de paddle en de ball weer op hun startpositie
 
-	USES eax, ebx, ecx, edx
-	mov ebx, offset ball_object
-	movzx eax, [ebx + Ball.active]	;; Als bal niet inactief is, dan skippen we de beweeglogica
-	cmp al, 0
-	je @@end
+; ; ; ; UP:
+; ; ; checken of de bal de bovenkant raakt => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu naar beneden
+; ; ; ; LEFT:
+; ; ; checken of de bal de linkerkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar rechts
+; ; ; ; RIGHT:
+; ; ; checken of de bal de rechterkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar links
+
+	; USES eax, ebx, ecx, edx
+	; mov ebx, offset ball_object
+	; movzx eax, [ebx + Ball.x_sense]
+	; cmp al, 0
+	; je @@moveLeft
+	; jmp @@moveRight
 	
-	movzx eax, [ebx + Ball.x_sense]
-	cmp al, 0
-	je @@yCheckx0
-@@yCheckx1:
-	call moveBallRight
-	movzx eax, [ebx + Ball.y_sense]
-	cmp al, 0
-	je @@up
-	call moveBallDown
-	jmp SHORT @@end
-@@yCheckx0:
-	call moveBallLeft
-	movzx eax, [ebx + Ball.y_sense]
-	cmp al, 0
-	je @@up
-	call moveBallDown
-	jmp SHORT @@end
-@@up:
-	call moveBallUp
-	jmp SHORT @@end
+; @@moveLeft:
+
+
+
+; @@moveRight:
+
+
+
 	
-;; LINKERRAND GERAAKT					(MISSCHIEN BETER CHECKEN OP RANDEN IN DE MOVE PROCEDURES)
-@@leftEdge:
-	mov [ebx + Ball.x_sense], 1		;; bal beweegt naar rechts (y_sense kan 1 of 0 zijn)
-;; BOVENRAND GERAAKT
-@@topEdge:
-	mov [ebx + Ball.y_sense], 1		;; bal beweegt naar onder (x_sense kan 1 of 0 zijn)
-;; RECHTERRAND GERAAKT
-@@rightEdge:
-	mov [ebx + Ball.x_sense], 0		;; bal beweegt naar links (y_sense kan 1 of 0 zijn)
+; @@yCheckx1:
+	; call moveBallRight
+	; movzx eax, [ebx + Ball.y_sense]
+	; cmp al, 0
+	; je @@up
+	; call moveBallDown
+	; jmp SHORT @@end
+; @@yCheckx0:
+	; call moveBallLeft
+	; movzx eax, [ebx + Ball.y_sense]
+	; cmp al, 0
+	; je @@up
+	; call moveBallDown
+	; jmp SHORT @@end
+; @@up:
+	; call moveBallUp
+	; jmp SHORT @@end
 	
-;; Als de bal dan de paddle raakt, dan moet y_sense op 0 gezet worden	
-@@end:
-	ret
-ENDP moveBall
+; ;; LINKERRAND GERAAKT					(MISSCHIEN BETER CHECKEN OP RANDEN IN DE MOVE PROCEDURES)
+; @@leftEdge:
+	; mov [ebx + Ball.x_sense], 1		;; bal beweegt naar rechts (y_sense kan 1 of 0 zijn)
+; ;; BOVENRAND GERAAKT
+; @@topEdge:
+	; mov [ebx + Ball.y_sense], 1		;; bal beweegt naar onder (x_sense kan 1 of 0 zijn)
+; ;; RECHTERRAND GERAAKT
+; @@rightEdge:
+	; mov [ebx + Ball.x_sense], 0		;; bal beweegt naar links (y_sense kan 1 of 0 zijn)
+	
+; ;; Als de bal dan de paddle raakt, dan moet y_sense op 0 gezet worden	
+; @@end:
+	; ret
+; ENDP moveBall
 
 ;; SPELLOGICA
 PROC gamelogistic
 	USES eax, ebx
+	
+	mov ebx, offset ball_object
+	mov al, [ebx + Ball.active]
+	cmp al, 0
+	je SHORT @@handle_input 
+	;call moveBall									; bal beweegt enkel alleen als deze actief is
 
+@@handle_input:
 	mov al, [offset __keyb_keyboardState + 39h]		; state van spatiebalk bijhouden 
 	cmp al, 1										; (kan misschien beter, aangezien deze later ook nog kan getriggerd worden)
 	je SHORT @@makeBallActive
@@ -352,11 +366,9 @@ PROC gamelogistic
 	cmp al, 1
 	je SHORT @@moveLeft
 	
-	call moveBall		; moet sowieso in elke iteratie opgeroepen worden
 	jmp SHORT @@end
-	
+
 @@makeBallActive:
-	mov ebx, offset ball_object
 	mov [ebx + Ball.active], 1		; op actief zetten
 	jmp SHORT @@end
 @@moveRight:
