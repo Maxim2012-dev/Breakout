@@ -22,7 +22,7 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - ANDERE SPRITES AANPASSEN ZODAT DEZE OOK EEN VERDELING HEBBEN
+; - 
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -288,33 +288,50 @@ ENDP moveBallRight
 	; USES eax, ebx, ecx, edx
 	; mov ebx, offset ball_object
 	; movzx eax, [ebx + Ball.x_sense]
-	; cmp eax, 0
-	; je @@moveLeft
-	; jmp @@moveRight
+	; cmp eax, LEFT
+	; je @@handleMoveLeft
+	; jmp @@handleMoveRight
 	
-; @@moveLeft:
+; @@handleMoveLeft:
 	; movzx eax, [ebx + Ball.x]
 	; cmp eax, 0
-	; je SHORT @@moveVertical
+	; jne @@moveLeft
+	; mov [ebx + Ball.x_sense], RIGHT
+	; jmp @@handleMoveVertical
+; @@moveLeft:
 	; dec eax
 	; mov [ebx + Ball.x], al
-	; jmp @@moveVertical
+	; jmp @@handleMoveVertical
 
-; @@moveRight:
+; @@handleMoveRight:
 	; movzx eax, [ebx + Ball.x]
 	; cmp eax, BOARDWIDTH-BALLWIDTHCELL
-	; je SHORT @@moveVertical
+	; jne @@moveRight
+	; mov [ebx + Ball.x_sense], LEFT
+	; jmp @@handleMoveVertical
+; @@moveRight:
 	; inc eax
 	; mov [ebx + Ball.x], al
-	; jmp @@moveVertical
+	; jmp @@handleMoveVertical
 
-; @@moveVertical:
+; @@handleMoveVertical:
 	; movzx eax, [ebx + Ball.y_sense]
-	; cmp eax, 0
-	; je @@moveUp
-	; jmp @@moveDown
+	; cmp eax, UP
+	; je @@handleMoveUp
+	; jmp @@handleMoveDown
 	
-; @@moveUP:
+; @@handleMoveUP:
+	; movzx eax, [ebx + Ball.y]
+	; cmp eax, 0
+	; jne @@moveDown
+	; mov [ebx + 
+; @@moveUp:
+	
+	
+; @@handleMoveDown:
+
+
+; @@moveDown:
 
 
 

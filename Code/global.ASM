@@ -46,10 +46,10 @@ BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 
 ; bewegingsrichtingen
 
-LEFT EQU 0
-RIGHT EQU 1
-UP EQU 0
-DOWN EQU 1
+LEFT 	EQU 0
+RIGHT 	EQU 1
+UP 		EQU 0
+DOWN 	EQU 1
 
 ; -------------------------------------------------------------------
 ; CODE
