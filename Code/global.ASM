@@ -38,6 +38,13 @@ CELLHEIGHT EQU 4	; celhoogte
 BOARDWIDTH EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
 BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 
+; bewegingsrichtingen
+
+LEFT EQU 0
+RIGHT EQU 1
+UP EQU 2
+DOWN EQU 3
+
 ; -------------------------------------------------------------------
 ; CODE
 ; -------------------------------------------------------------------
