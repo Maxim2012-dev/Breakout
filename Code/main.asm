@@ -22,7 +22,7 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - 
+; - moveBallLeft en moveBallRight moet ook nog steeds globaal bestaan voor als mijn paddle in het begin beweegt
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -288,15 +288,34 @@ ENDP moveBallRight
 	; USES eax, ebx, ecx, edx
 	; mov ebx, offset ball_object
 	; movzx eax, [ebx + Ball.x_sense]
-	; cmp al, 0
+	; cmp eax, 0
 	; je @@moveLeft
 	; jmp @@moveRight
 	
 ; @@moveLeft:
-
-
+	; movzx eax, [ebx + Ball.x]
+	; cmp eax, 0
+	; je SHORT @@moveVertical
+	; dec eax
+	; mov [ebx + Ball.x], al
+	; jmp @@moveVertical
 
 ; @@moveRight:
+	; movzx eax, [ebx + Ball.x]
+	; cmp eax, BOARDWIDTH-BALLWIDTHCELL
+	; je SHORT @@moveVertical
+	; inc eax
+	; mov [ebx + Ball.x], al
+	; jmp @@moveVertical
+
+; @@moveVertical:
+	; movzx eax, [ebx + Ball.y_sense]
+	; cmp eax, 0
+	; je @@moveUp
+	; jmp @@moveDown
+	
+; @@moveUP:
+
 
 
 
