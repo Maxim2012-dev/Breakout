@@ -441,6 +441,10 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
+PROC determineColor
+	ARG [@@COUNTER] RETURNS eax
+	USES eax, edx
+
 PROC drawStones
 	USES eax, ebx, ecx, edx
 	mov ebx, offset stones_array
@@ -464,7 +468,11 @@ PROC drawStones
 	mul edx
 	add eax, STONESSTARTY
 	pop edx
-	call drawObject, edx, eax, offset bstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx
+	push eax
+	call determineColor, ecx
+	pop eax
+	call drawObject, edx, eax, offset rstone_array, STONEWIDTHPX, STONEHEIGHTPX
 	pop ecx					; counter van stack halen
 	add ebx, 2				; naar volgende struct gaan
 	loop @@drawLoop
@@ -484,8 +492,25 @@ PROC initStones
 	loop @@arrayLoop
 	ret
 ENDP initStones
+
+;; Levens displayen (zie compendium)
+PROC displayString
+USES eax, ebx, edx
+	mov edx, 0
+	mov ebx, 0
+	mov ah, 02h
+	shl edx, 08h
+	mov dl, bl
+	mov bh, 0
+	int 10h
+	mov ah, 09h
+	mov edx, offset levens_string
+	int 21h
+	ret
+ENDP displayString
 	
 PROC drawlogistic
+	call displayString
 	call drawStones 
 	call drawBall
 	call drawPaddle
@@ -525,7 +550,6 @@ PROC main
 	call closeFile
 	
 	call initStones
-	call drawlogistic
 	
 	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
@@ -570,6 +594,7 @@ DATASEG
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	readErrorMsg 	db "could not read data", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
+	levens_string	db "Levens:", 7, 10, '$'
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
 	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
