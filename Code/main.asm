@@ -233,38 +233,82 @@ PROC movePaddleRight
 	ret
 ENDP movePaddleRight
 
-PROC moveBallLeft					;; Lijkt wel heel erg op movePaddleLeft
+PROC moveBallDown
+	USES eax, ebx
+	mov ebx, offset ball_object
+	movzx eax, [ebx + Ball.y]
+	inc eax 						;; Het checken op spelranden doen we in moveBall
+	mov [ebx + Ball.y], al
+	ret
+ENDP moveBallDown
+
+PROC moveBallUp
+	USES eax, ebx
+	mov ebx, offset ball_object
+	movzx eax, [ebx + Ball.y]
+	dec eax 						;; Het checken op spelranden doen we in moveBall
+	mov [ebx + Ball.y], al
+	ret
+ENDP moveBallUp
+
+PROC moveBallLeft
 	USES eax, ebx
 	mov ebx, offset ball_object
 	movzx eax, [ebx + Ball.x]
-	dec eax 
-	cmp eax, 0
-	jl @@end
+	dec eax 						;; Het checken op spelranden doen we in moveBall
 	mov [ebx + Ball.x], al
-@@end:	
 	ret
 ENDP moveBallLeft
 
-PROC moveBallRight					;; Lijkt wel heel erg op movePaddleRight
-	USES eax, ebx, ecx, edx
+PROC moveBallRight
+	USES eax, ebx
 	mov ebx, offset ball_object
-	mov eax, SCRWIDTH
-	sub eax, BALLWIDTH
-	mov ecx, CELLWIDTH
-	xor edx, edx
-	div ecx
-	movzx ecx, [ebx + Ball.x]
-	inc ecx
-	cmp ecx, eax
-	jg @@end
-	mov [ebx + Ball.x], cl
-@@end:
+	movzx eax, [ebx + Ball.x]
+	inc eax							;; Het checken op spelranden doen we in moveBall
+	mov [ebx + Ball.x], al
 	ret
 ENDP moveBallRight
 
 PROC moveBall
 	USES eax, ebx, ecx, edx
+	mov ebx, offset ball_object
+	movzx eax, [ebx + Ball.active]	;; Als bal niet inactief is, dan skippen we de beweeglogica
+	cmp al, 0
+	jne @@end
 	
+	movzx eax, [ebx + Ball.x_sense]
+	cmp al, 0
+	je @@yCheckx0
+@@yCheckx1
+	call moveBallRight
+	movzx eax, [ebx + Ball.y_sense]
+	cmp al, 0
+	je @@up
+	call moveBallDown
+	jmp SHORT @@end
+@@yCheckx0
+	call moveBallLeft
+	movzx eax, [ebx + Ball.y_sense]
+	cmp al, 0
+	je @@up
+	call moveBallDown
+	jmp SHORT @@end
+@@up
+	call moveBallUp
+	jmp SHORT @@end
+	
+;; LINKERRAND GERAAKT					(MISSCHIEN BETER CHECKEN OP RANDEN IN DE MOVE PROCEDURES)
+@@leftEdge:
+	mov [ebx + Ball.x_sense], 1		;; bal beweegt naar rechts (y_sense kan 1 of 0 zijn)
+;; BOVENRAND GERAAKT
+@@topEdge:
+	mov [ebx + Ball.y_sense], 1		;; bal beweegt naar onder (x_sense kan 1 of 0 zijn)
+;; RECHTERRAND GERAAKT
+@@rightEdge:
+	mov [ebx + Ball.x_sense], 0		;; bal beweegt naar links (y_sense kan 1 of 0 zijn)
+	
+;; Als de bal dan de paddle raakt, dan moet y_sense op 0 gezet worden	
+@@end:
 	ret
 ENDP moveBall	
 
