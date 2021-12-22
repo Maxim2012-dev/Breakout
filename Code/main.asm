@@ -432,7 +432,15 @@ PROC drawPaddle
 ENDP drawPaddle
 
 PROC drawStones
-
+	USES eax, ebx, ecx, edx
+	mov ebx, offset stones_array
+	mov ecx, COLSTONES*ROWSTONES
+	mov eax, STONESSTARTX
+	mov edx, STONESSTARTY
+@@drawLoop:
+	call drawObject, eax, edx, offset bstone_array, STONEWIDTH, STONEHEIGHT
+	; TODO
+	loop @@drawLoop
 	ret
 ENDP drawStones
 
