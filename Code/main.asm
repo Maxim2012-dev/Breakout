@@ -205,23 +205,6 @@ PROC movePaddleLeft
 	ret
 ENDP movePaddleLeft
 
-; PROC movePaddleLeft
-	; USES eax, ebx
-	; mov ebx, offset paddle_object
-	; movzx eax, [ebx + Paddle.x]
-	; cmp eax, 0
-	; je SHORT @@end
-	; dec eax
-	; mov [ebx + Paddle.x], al
-	; mov ebx, offset ball_object			; checken of de bal mee moet bewegen
-	; movzx eax, [ebx + Ball.active]
-	; cmp eax, 1
-	; je SHORT @@end
-	; call moveBallLeft
-; @@end:
-	; ret
-; ENDP movePaddleLeft
-
 PROC movePaddleRight
 	USES ebx
 	mov ebx, offset paddle_object
@@ -235,25 +218,7 @@ PROC movePaddleRight
 	inc [ebx + Ball.x] ; bal naar rechts bewegen
 @@end:
 	ret
-ENDP movePaddleRight		
-
-; PROC movePaddleRight
-	; USES eax, ebx
-	; mov ebx, offset paddle_object
-	; movzx eax, [ebx + Paddle.x]
-	; cmp eax, BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
-	; je SHORT @@end
-	; inc eax
-	; mov [ebx + Paddle.x], al
-	; ; checken of de bal mee moet bewegen
-	; mov ebx, offset ball_object
-	; movzx eax, [ebx + Ball.active]
-	; cmp eax, 1
-	; je SHORT @@end
-	; call moveBallRight
-; @@end:
-	; ret
-; ENDP movePaddleRight
+ENDP movePaddleRight
 
 PROC moveBall
 
@@ -332,38 +297,6 @@ PROC moveBall
 	mov edx, offset paddle_object
 	mov [edx + Paddle.x], PADDLESTARTX
 	mov [edx + Paddle.y], PADDLESTARTY
-	
-; @@handleMoveDown:
-	; movzx eax, [ebx + Ball.y]
-	; cmp eax, PADDLESTARTY-BALLHEIGHTCELL
-	; jg @@belowPaddle
-	; jl @@moveDown
-	; movzx ecx, [ebx + Ball.x]
-	; mov edx, offset paddle_object
-	; movzx edx, [edx + Paddle.x]
-	; sub edx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
-	; cmp ecx, edx
-	; jl @@moveDown								; er is geen botsing, de ball zit links van de paddle
-	; mov edx, offset paddle_object
-	; movzx edx, [edx + Paddle.x]
-	; add edx, PADDLEWIDTHCELL
-	; cmp ecx, edx
-	; jg @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
-	; mov [ebx + Ball.y_sense], UP
-	; jmp @@end
-; @@moveDown:
-	; inc eax
-	; mov [ebx + Ball.y], al
-	; jmp @@end
-; @@belowPaddle:
-	; cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
-	; jne @@moveDown
-	; mov [ebx + Ball.x], BALLSTARTX
-	; mov [ebx + Ball.y], BALLSTARTY
-	; mov [ebx + Ball.active], 0
-	; mov edx, offset paddle_object
-	; mov [edx + Paddle.x], PADDLESTARTX
-	; mov [edx + Paddle.y], PADDLESTARTY
 	
 @@end:
 	ret
