@@ -458,9 +458,37 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
+;; kleur van huidige steen bepalen op basis van counter
 PROC determineColor
-	ARG [@@COUNTER] RETURNS eax
-	USES eax, edx
+	ARG @@COUNTER:byte RETURNS ebx
+	USES eax, edx, ecx, ebx
+	xor edx, edx
+	movzx eax, [@@COUNTER]
+	mov ecx, ROWSTONES
+	div ecx
+	cmp al, 0
+	je @@onelbl
+	cmp al, 1
+	je @@onelbl
+	cmp al, 2
+	je @@threelbl
+	cmp al, 3
+	je @@threelbl
+	cmp al, 4
+	je @@fivelbl
+	cmp al, 5
+	je @@fivelbl
+@@onelbl:
+	mov ebx, offset gstone_array
+	jmp @@endlbl
+@@threelbl:
+	mov ebx, offset rstone_array
+	jmp @@endlbl
+@@fivelbl:
+	mov ebx, offset bstone_array
+@@endlbl:	
+	ret
+ENDP determineColor
 
 PROC drawStones
 	USES eax, ebx, ecx, edx
@@ -606,6 +634,8 @@ DATASEG
 	gstone_file 	db "gstone", 0
 	rstone_file		db "rstone", 0
 	;ystone_file		db "ystone", 0
+	
+	;Jump_table 		dd zerolbl, onelbl, twolbl ,threelbl, fourlbl, fivelbl ; voor in determineColor
 	
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	readErrorMsg 	db "could not read data", 13, 10, '$'
