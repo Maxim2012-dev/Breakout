@@ -465,30 +465,45 @@ ENDP drawPaddle
 
 PROC drawStones
 	USES eax, ebx, ecx, edx
-	mov ebx, offset stones_array
-	mov ecx, COLSTONES*ROWSTONES
+	mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
+	mov ecx, COLSTONES*ROWSTONES	
 @@drawLoop:
-	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
 	push ecx				; counter OP STACK
-	xor edx, edx
-	movzx eax, [ebx + Stone.index]
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL					
+	mov eax, COLSTONES*ROWSTONES			; huidige index in stones_array (in begin : 36-36 = 0)
+	sub eax, ecx
+	push eax				; index OP STACK
 	mov ecx, COLSTONES
+	xor edx, edx			; niet op 0 zetten = error
 	div ecx
 	mov eax, STONEWIDTHCELL
 	mul edx
 	add eax, STONESSTARTX
+	pop ecx					; index VAN STACK
 	push eax				; x-coördinaat OP STACK
 	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
-	xor edx, edx
-	movzx eax, [ebx + Stone.index]
+	mov eax, ecx
+	push ecx				; index terug OP STACK
+	mov ecx, COLSTONES
+	xor edx, edx			; niet op 0 zetten = error
 	div ecx
 	mov edx, STONEHEIGHTCELL
 	mul edx
 	add eax, STONESSTARTY   ; eax bevat y-coördinaat
-	pop edx					; x-coördinaat VAN STACK
-	pop ecx					; counter VAN STACK
-	;call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
-	call drawObject, edx, eax, offset gstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx					; index VAN STACK
+	push eax				; y-coördinaat OP STACK
+	xor edx, edx
+	mov eax, ecx
+	mov ecx, COLSTONES*ROWSPERCOLOUR
+	div ecx							; index / 12 ---> eax
+	mov ebx, offset bstone_array	; offset eerste sprite in geheugen
+	mov ecx, STONESIZEPX
+	mul ecx
+	add ebx, eax
+	pop eax
+	pop edx							; x-coördinaat VAN STACK
+	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx							; counter VAN STACK
 	inc ebx				; naar volgende struct gaan
 	loop @@drawLoop
 	ret
@@ -512,7 +527,7 @@ ENDP displayString
 	
 PROC drawlogistic
 	call displayString
-	;call drawStones 
+	call drawStones 
 	call drawBall
 	call drawPaddle
 	ret
