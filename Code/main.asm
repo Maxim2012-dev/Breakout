@@ -22,7 +22,7 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - ALS DE BAL DE ONDERKANT VAN DE SCHERMRAAKT BEGINT DEZE WEER OP ZIJN STARTPOSITIE SAMEN MET DE PADDLE (DE BALL IS DAN NIET MEER ACTIEF EN VERLIEST 1 LEVEN ALS DEZE ER NOG HEEFT ANDERS IS HET SPEL GEDAAN)
+; - VERLIEST 1 LEVEN ALS DEZE ER NOG HEEFT ANDERS IS HET SPEL GEDAAN)
 ; - BESTANDEN HERORGANISEREN
 ; - BAL TRAGER LATEN BEWEGEN
 
@@ -48,13 +48,13 @@ ENDP terminateProcess
 
 ; Wait for a specific keystroke.
 PROC waitForSpecificKeystroke
-	ARG 	@@key:byte
-	USES 	eax
+	ARG @@key:byte
+	USES eax
 
 @@waitForKeystroke:
-	mov	ah,00h
+	mov	ah, 00h
 	int	16h
-	cmp	al,[@@key]
+	cmp	al, [@@key]
 	jne	@@waitForKeystroke
 
 	ret
@@ -192,152 +192,137 @@ STRUC Stone
 ENDS Stone
 
 PROC movePaddleLeft
-	USES eax, ebx
+	USES ebx
 	mov ebx, offset paddle_object
-	movzx eax, [ebx + Paddle.x]
-	cmp eax, 0
+	cmp [ebx + Paddle.x], 0
 	je SHORT @@end
-	dec eax
-	mov [ebx + Paddle.x], al
+	dec [ebx + Paddle.x]
 	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
-	movzx eax, [ebx + Ball.active]
-	cmp eax, 1
+	cmp [ebx + Ball.active], 1
 	je SHORT @@end
-	call moveBallLeft
+	dec [ebx + Ball.x]					; bal naar links bewegen
 @@end:
 	ret
-ENDP movePaddleLeft	
+ENDP movePaddleLeft
+
+; PROC movePaddleLeft
+	; USES eax, ebx
+	; mov ebx, offset paddle_object
+	; movzx eax, [ebx + Paddle.x]
+	; cmp eax, 0
+	; je SHORT @@end
+	; dec eax
+	; mov [ebx + Paddle.x], al
+	; mov ebx, offset ball_object			; checken of de bal mee moet bewegen
+	; movzx eax, [ebx + Ball.active]
+	; cmp eax, 1
+	; je SHORT @@end
+	; call moveBallLeft
+; @@end:
+	; ret
+; ENDP movePaddleLeft
 
 PROC movePaddleRight
-	USES eax, ebx
+	USES ebx
 	mov ebx, offset paddle_object
-	movzx eax, [ebx + Paddle.x]
-	cmp eax, BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
+	cmp [ebx + Paddle.x], BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
 	je SHORT @@end
-	inc eax
-	mov [ebx + Paddle.x], al
+	inc [ebx + Paddle.x]
 	; checken of de bal mee moet bewegen
 	mov ebx, offset ball_object
-	movzx eax, [ebx + Ball.active]
-	cmp eax, 1
+	cmp [ebx + Ball.active], 1
 	je SHORT @@end
-	call moveBallRight
+	inc [ebx + Ball.x] ; bal naar rechts bewegen
 @@end:
 	ret
-ENDP movePaddleRight
+ENDP movePaddleRight		
 
-PROC moveBallLeft ; simpele versie van move, gebruikt door paddle in het begin van de spel
-	USES eax, ebx
-	mov ebx, offset ball_object
-	movzx eax, [ebx + Ball.x]
-	dec eax
-	mov [ebx + Ball.x], al
-	ret
-ENDP moveBallLeft
-
-PROC moveBallRight ; simpele versie van move, gebruikt door paddle in het begin van de spel
-	USES eax, ebx
-	mov ebx, offset ball_object
-	movzx eax, [ebx + Ball.x]
-	inc eax
-	mov [ebx + Ball.x], al
-	ret
-ENDP moveBallRight
+; PROC movePaddleRight
+	; USES eax, ebx
+	; mov ebx, offset paddle_object
+	; movzx eax, [ebx + Paddle.x]
+	; cmp eax, BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
+	; je SHORT @@end
+	; inc eax
+	; mov [ebx + Paddle.x], al
+	; ; checken of de bal mee moet bewegen
+	; mov ebx, offset ball_object
+	; movzx eax, [ebx + Ball.active]
+	; cmp eax, 1
+	; je SHORT @@end
+	; call moveBallRight
+; @@end:
+	; ret
+; ENDP movePaddleRight
 
 PROC moveBall
 
 ; TODO:
 
-;; STAP1: ball houdt enkel rekening met schermgrenzen
-
 ; ; VOOR LATER: NIET VERGETEN OM BIJ ELKE BEWEGINGSRICHTING TE CHECKEN OF DE BALL EEN STONE RAAKT!!!
 
-; ; ; DOWN:
-; ; checken of de bal zich onder de denkbeeldige lijn bevindt (zie oranje lijn tekening)
-		; ; => zo ja, check of deze zich juist boven de paddle bevindt
-				; ; => zo ja, check of er een match is tussen het bereik van da ball en de paddle volgens de x-as
-						; ; => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu terug naar boven
-						; ; => zo nee, beweeg de ball volgens zijn huidige richting 
-				; ; => zo nee (dan bevindt deze zich onder of naast de paddle), check of deze de onderkant van de scherm raakt 
-						; ; => zo ja, decrement het aantal levens van de bal en check of het aantal levens = 0
-								; ; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
-								; ; => zo nee, plaats de paddle en de ball weer op hun startpositie
-
-; ; ; UP:
-; ; checken of de bal de bovenkant raakt => zo ja, wijzig de beweginsrichting volgens de y-as, de ball beweeegt nu naar beneden
-; ; ; LEFT:
-; ; checken of de bal de linkerkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar rechts
-; ; ; RIGHT:
-; ; checken of de bal de rechterkant raakt => zo ja, wijzig de beweginsrichting volgens de x-as, de ball beweeegt nu naar links
+;	decrement het aantal levens van de bal en check of het aantal levens = 0
+	; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
+	; => zo nee, plaats de paddle en de ball weer op hun startpositie
 
 	USES eax, ebx, ecx, edx
 	mov ebx, offset ball_object
-	movzx eax, [ebx + Ball.x_sense]
-	cmp eax, LEFT
-	je @@handleMoveLeft
-	jmp @@handleMoveRight
+	cmp [ebx + Ball.x_sense], RIGHT
+	je SHORT @@handleMoveRight
 	
 @@handleMoveLeft:
-	movzx eax, [ebx + Ball.x]
-	cmp eax, 0
-	jne @@moveLeft
+	cmp [ebx + Ball.x], 0
+	jg SHORT @@moveLeft
 	mov [ebx + Ball.x_sense], RIGHT
-	jmp @@handleMoveVertical
+	jmp SHORT @@handleMoveVertical
 @@moveLeft:
-	dec eax
-	mov [ebx + Ball.x], al
-	jmp @@handleMoveVertical
+	dec [ebx + Ball.x]
+	jmp SHORT @@handleMoveVertical
 
 @@handleMoveRight:
-	movzx eax, [ebx + Ball.x]
-	cmp eax, BOARDWIDTH-BALLWIDTHCELL
-	jne @@moveRight
+	cmp [ebx + Ball.x], BOARDWIDTH-BALLWIDTHCELL
+	jl SHORT @@moveRight
 	mov [ebx + Ball.x_sense], LEFT
-	jmp @@handleMoveVertical
+	jmp SHORT @@handleMoveVertical
 @@moveRight:
-	inc eax
-	mov [ebx + Ball.x], al
-	jmp @@handleMoveVertical
+	inc [ebx + Ball.x]
 
 @@handleMoveVertical:
-	movzx eax, [ebx + Ball.y_sense]
-	cmp eax, UP
-	je @@handleMoveUp
-	jmp @@handleMoveDown
+	cmp [ebx + Ball.y_sense], UP
+	je SHORT @@handleMoveUp
+	jmp SHORT @@handleMoveDown
 	
 @@handleMoveUp:
-	movzx eax, [ebx + Ball.y]
-	cmp eax, 0
-	jne @@moveUp
+	cmp [ebx + Ball.y], 0
+	jg SHORT @@moveUp
 	mov [ebx + Ball.y_sense], DOWN
-	jmp @@end
+	jmp SHORT @@end
 @@moveUp:
-	dec eax
-	mov [ebx + Ball.y], al
-	jmp @@end
+	dec [ebx + Ball.y]
+	jmp SHORT @@end
 	
 @@handleMoveDown:
 	movzx eax, [ebx + Ball.y]
 	cmp eax, PADDLESTARTY-BALLHEIGHTCELL
-	jg @@belowPaddle
-	jl @@moveDown
+	jg SHORT @@belowPaddle
+	jl SHORT @@moveDown
 	movzx ecx, [ebx + Ball.x]
 	mov edx, offset paddle_object
 	movzx edx, [edx + Paddle.x]
 	sub edx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
 	cmp ecx, edx
-	jl @@moveDown								; er is geen botsing, de ball zit links van de paddle
+	jl SHORT @@moveDown								; er is geen botsing, de ball zit links van de paddle
 	mov edx, offset paddle_object
 	movzx edx, [edx + Paddle.x]
 	add edx, PADDLEWIDTHCELL
 	cmp ecx, edx
-	jg @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
+	jg SHORT @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
 	mov [ebx + Ball.y_sense], UP
-	jmp @@end
+	jmp SHORT @@end
 @@moveDown:
 	inc eax
 	mov [ebx + Ball.y], al
-	jmp @@end
+	jmp SHORT @@end
 @@belowPaddle:
 	cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
 	jne @@moveDown
@@ -348,6 +333,38 @@ PROC moveBall
 	mov [edx + Paddle.x], PADDLESTARTX
 	mov [edx + Paddle.y], PADDLESTARTY
 	
+; @@handleMoveDown:
+	; movzx eax, [ebx + Ball.y]
+	; cmp eax, PADDLESTARTY-BALLHEIGHTCELL
+	; jg @@belowPaddle
+	; jl @@moveDown
+	; movzx ecx, [ebx + Ball.x]
+	; mov edx, offset paddle_object
+	; movzx edx, [edx + Paddle.x]
+	; sub edx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
+	; cmp ecx, edx
+	; jl @@moveDown								; er is geen botsing, de ball zit links van de paddle
+	; mov edx, offset paddle_object
+	; movzx edx, [edx + Paddle.x]
+	; add edx, PADDLEWIDTHCELL
+	; cmp ecx, edx
+	; jg @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
+	; mov [ebx + Ball.y_sense], UP
+	; jmp @@end
+; @@moveDown:
+	; inc eax
+	; mov [ebx + Ball.y], al
+	; jmp @@end
+; @@belowPaddle:
+	; cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
+	; jne @@moveDown
+	; mov [ebx + Ball.x], BALLSTARTX
+	; mov [ebx + Ball.y], BALLSTARTY
+	; mov [ebx + Ball.active], 0
+	; mov edx, offset paddle_object
+	; mov [edx + Paddle.x], PADDLESTARTX
+	; mov [edx + Paddle.y], PADDLESTARTY
+	
 @@end:
 	ret
 ENDP moveBall
@@ -357,22 +374,18 @@ PROC gamelogistic
 	USES eax, ebx
 	
 	mov ebx, offset ball_object
-	mov al, [ebx + Ball.active]
-	cmp al, 0
+	cmp [ebx + Ball.active], 0
 	je SHORT @@handle_input 
 	call moveBall									; bal beweegt enkel alleen als deze actief is
 
 @@handle_input:
-	mov al, [offset __keyb_keyboardState + 39h]		; state van spatiebalk bijhouden 
-	cmp al, 1										; (kan misschien beter, aangezien deze later ook nog kan getriggerd worden)
+	cmp [offset __keyb_keyboardState + 39h], 1		; spatiebalk ingedrukt? 
 	je SHORT @@makeBallActive
-
-	mov al, [offset __keyb_keyboardState + 4Dh]		; state van rechterpijl bijhouden
-	cmp al, 1
+		
+	cmp [offset __keyb_keyboardState + 4Dh], 1		; rechterpijl ingedrukt?
 	je SHORT @@moveRight
 		
-	mov al, [offset __keyb_keyboardState + 4Bh]		; state van linkerpijl bijhouden
-	cmp al, 1
+	cmp [offset __keyb_keyboardState + 4Bh], 1		; linkerpijl ingedrukt?
 	je SHORT @@moveLeft
 	
 	jmp SHORT @@end
