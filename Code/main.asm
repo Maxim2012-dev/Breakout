@@ -186,6 +186,7 @@ ENDS Paddle
 STRUC Stone
 	index 			db 0	; index in array
 	alive			db 1
+	color			db 0
 ENDS Stone
 
 PROC movePaddleLeft
@@ -339,17 +340,6 @@ PROC moveBall
 @@downToUp:
 	mov [ebx + Ball.y_sense], UP
 	
-	
-; @@handleMoveDown:
-	; movzx eax, [ebx + Ball.y]
-	; cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
-	; jne @@moveDown
-	; mov [ebx + Ball.y_sense], UP
-	; jmp @@end
-; @@moveDown:
-	; inc eax
-	; mov [ebx + Ball.y], al
-
 @@end:
 	ret
 ENDP moveBall
@@ -442,42 +432,68 @@ PROC drawPaddle
 	ret
 ENDP drawPaddle
 
+;; kleur van huidige steen bepalen op basis van counter
 ; PROC determineColor
-	; ARG [@@COUNTER] RETURNS eax
-	; USES eax, edx
-
-; PROC drawStones
-	; USES eax, ebx, ecx, edx
-	; mov ebx, offset stones_array
-	; mov ecx, COLSTONES*ROWSTONES
-; @@drawLoop:
-	; ; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
-	; push ecx				; counter OP STACK
+	; ARG @@COUNTER:byte RETURNS ebx
+	; USES eax, edx, ecx, ebx
 	; xor edx, edx
-	; movzx eax, [ebx + Stone.index]
-	; mov ecx, COLSTONES
+	; movzx eax, [@@COUNTER]
+	; mov ecx, ROWSTONES
 	; div ecx
-	; mov eax, STONEWIDTHCELL
-	; mul edx
-	; add eax, STONESSTARTX
-	; push eax				; x-coördinaat OP STACK
-	; ; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
-	; xor edx, edx
-	; movzx eax, [ebx + Stone.index]
-	; div ecx
-	; mov edx, STONEHEIGHTCELL
-	; mul edx
-	; add eax, STONESSTARTY   ; eax bevat y-coördinaat
-	; pop edx					; x-coördinaat VAN STACK
-	; pop ecx					; counter VAN STACK
-	; push ebx 				; huidige struct OP STACK
-	; call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
-	; call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
-	; pop ebx					; huidige struct VAN STACK
-	; add ebx, 2				; naar volgende struct gaan
-	; loop @@drawLoop
+	; cmp al, 0
+	; je @@onelbl
+	; cmp al, 1
+	; je @@onelbl
+	; cmp al, 2
+	; je @@threelbl
+	; cmp al, 3
+	; je @@threelbl
+	; cmp al, 4
+	; je @@fivelbl
+	; cmp al, 5
+	; je @@fivelbl
+; @@onelbl:
+	; mov ebx, offset gstone_array
+	; jmp @@endlbl
+; @@threelbl:
+	; mov ebx, offset rstone_array
+	; jmp @@endlbl
+; @@fivelbl:
+	; mov ebx, offset bstone_array
+; @@endlbl:	
 	; ret
-; ENDP drawStones
+; ENDP determineColor
+
+PROC drawStones
+	USES eax, ebx, ecx, edx
+	mov ebx, offset stones_array
+	mov ecx, COLSTONES*ROWSTONES
+@@drawLoop:
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	push ecx				; counter OP STACK
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	mov ecx, COLSTONES
+	div ecx
+	mov eax, STONEWIDTHCELL
+	mul edx
+	add eax, STONESSTARTX
+	push eax				; x-coördinaat OP STACK
+	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	xor edx, edx
+	movzx eax, [ebx + Stone.index]
+	div ecx
+	mov edx, STONEHEIGHTCELL
+	mul edx
+	add eax, STONESSTARTY   ; eax bevat y-coördinaat
+	pop edx					; x-coördinaat VAN STACK
+	pop ecx					; counter VAN STACK
+	;call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
+	call drawObject, edx, eax, offset gstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	add ebx, 3				; naar volgende struct gaan
+	loop @@drawLoop
+	ret
+ENDP drawStones
 
 ;; Indexen juist zetten
 PROC initStones
@@ -487,7 +503,7 @@ PROC initStones
 	xor eax, eax
 @@arrayLoop:	
 	mov [ebx + Stone.index], al
-	add ebx, 2					; naar volgende struct gaan
+	add ebx, 3					; naar volgende struct gaan
 	inc eax
 	loop @@arrayLoop
 	ret
