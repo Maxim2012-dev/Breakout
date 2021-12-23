@@ -51,6 +51,19 @@ PROC print_array
 	ret
 ENDP print_array
 
+;; Indexen juist zetten
+PROC initStones
+	USES ebx, ecx
+	mov ecx, COLSTONES*ROWSTONES
+	mov ebx, offset stones_array
+	add ebx, COLSTONES*ROWSTONES*2
+@@arrayLoop:	
+	mov [ebx + Stone.index], cl
+	sub ebx, 2				; naar vorige struct gaan (we lopen in omgekeerde richting door de array, om gebruik te maken van ecx)
+	loop @@arrayLoop
+	ret
+ENDP initStones
+
 PROC printStones
 	USES eax, ebx, ecx
 	mov ecx, COLSTONES*ROWSTONES
@@ -87,4 +100,95 @@ PROC drawObject ; TODO -- cellen omvormen naar pixels
 	ret
 ENDP drawObject
 
-; oproep call print_array, PADDLESIZE, offset paddle_array
+PROC drawStones ; PROCEDURE MAXIM
+	USES eax, ebx, ecx, edx
+	;mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
+	mov ecx, COLSTONES*ROWSTONES	
+@@drawLoop:
+	push ecx				; counter OP STACK
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL					
+	mov eax, COLSTONES*ROWSTONES			; huidige index in stones_array (in begin : 36-36 = 0)
+	sub eax, ecx
+	push eax				; index OP STACK
+	mov ecx, COLSTONES
+	xor edx, edx			; niet op 0 zetten = error
+	div ecx
+	mov eax, STONEWIDTHCELL
+	mul edx
+	add eax, STONESSTARTX
+	pop ecx					; index VAN STACK
+	push eax				; x-coördinaat OP STACK
+	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	mov eax, ecx
+	push ecx				; index terug OP STACK
+	mov ecx, COLSTONES
+	xor edx, edx			; niet op 0 zetten = error
+	div ecx
+	mov edx, STONEHEIGHTCELL
+	mul edx
+	add eax, STONESSTARTY   ; eax bevat y-coördinaat
+	pop ecx					; index VAN STACK
+	push eax				; y-coördinaat OP STACK
+	xor edx, edx
+	mov eax, ecx
+	mov ecx, COLSTONES*ROWSPERCOLOUR
+	div ecx							; index / 12 ---> eax
+	mov ebx, offset bstone_array	; offset eerste sprite in geheugen
+	mov ecx, STONESIZEPX
+	mul ecx
+	add ebx, eax
+	pop eax
+	pop edx							; x-coördinaat VAN STACK
+	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
+	pop ecx							; counter VAN STACK
+	;inc ebx				; naar volgende struct gaan
+	loop @@drawLoop
+	ret
+ENDP drawStones
+
+PROC drawStones ; EERSTE POGING (SLECHTE) VERBETERING ALEXANDRE
+	USES eax, ebx, ecx, edx
+	;mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
+	mov ecx, COLSTONES*ROWSTONES - 1	
+@@drawLoop:
+	push ecx				; counter OP STACK
+	; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	mov eax, ecx
+	mov ecx, COLSTONES
+	xor edx, edx			; op 0 zetten voor deling, moet gebeuren anders error
+	div ecx
+	mov eax, STONEWIDTHCELL
+	mul edx
+	add eax, STONESSTARTX
+	pop ecx					; counter VAN STACK
+	push eax				; x-coördinaat OP STACK
+	; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	mov eax, ecx
+	push ecx				; counter terug OP STACK
+	mov ecx, COLSTONES
+	xor edx, edx
+	div ecx
+	mov edx, STONEHEIGHTCELL
+	mul edx
+	add eax, STONESSTARTY 
+	pop ecx					; counter VAN STACK
+	push ecx				; counter OP STACK
+	push eax				; y-coördinaat OP STACK
+	mov eax, ecx
+	mov ecx, COLSTONES*ROWSPERCOLOUR
+	xor edx, edx
+	div ecx
+	mov ebx, offset bstone_array	; offset eerste sprite in geheugen
+	mov ecx, STONESIZEPX
+	mul ecx
+	add ebx, eax
+	pop eax					; y-coördinaat VAN STACK
+	pop ecx					; counter VAN STACK
+	pop edx					; x-coördinaat VAN STACK
+	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
+	;inc ebx					; naar volgende struct gaan
+	dec ecx
+	cmp ecx, 0
+	jge @@drawLoop
+	ret
+ENDP drawStones
