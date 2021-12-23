@@ -24,6 +24,7 @@ CODESEG
 ; # TODO LIJST #
 ; - ALS DE BAL DE ONDERKANT VAN DE SCHERMRAAKT BEGINT DEZE WEER OP ZIJN STARTPOSITIE SAMEN MET DE PADDLE (DE BALL IS DAN NIET MEER ACTIEF EN VERLIEST 1 LEVEN ALS DEZE ER NOG HEEFT ANDERS IS HET SPEL GEDAAN)
 ; - BESTANDEN HERORGANISEREN
+; - BAL TRAGER LATEN BEWEGEN
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -330,7 +331,9 @@ PROC moveBall
 	movzx edx, [edx + Paddle.x]
 	add edx, PADDLEWIDTHCELL
 	cmp ecx, edx
-	jle @@downToUp								; er is een botsing, de ball zit NIET rechts van de paddle 
+	jg @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
+	mov [ebx + Ball.y_sense], UP
+	jmp @@end
 @@moveDown:
 	inc eax
 	mov [ebx + Ball.y], al
@@ -338,8 +341,12 @@ PROC moveBall
 @@belowPaddle:
 	cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
 	jne @@moveDown
-@@downToUp:
-	mov [ebx + Ball.y_sense], UP
+	mov [ebx + Ball.x], BALLSTARTX
+	mov [ebx + Ball.y], BALLSTARTY
+	mov [ebx + Ball.active], 0
+	mov edx, offset paddle_object
+	mov [edx + Paddle.x], PADDLESTARTX
+	mov [edx + Paddle.y], PADDLESTARTY
 	
 @@end:
 	ret
