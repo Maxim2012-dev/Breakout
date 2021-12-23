@@ -595,7 +595,7 @@ DATASEG
 	openErrorMsg 	db "could not open file", 13, 10, '$'
 	readErrorMsg 	db "could not read data", 13, 10, '$'
 	closeErrorMsg 	db "error during file closing", 13, 10, '$'
-	levens_string	db "Levens:", 7, 10, '$'
+	levens_string	db "Levens:", 7, 10, '$' 
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
 	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
