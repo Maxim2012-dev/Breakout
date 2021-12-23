@@ -186,9 +186,9 @@ STRUC Paddle
 ENDS Paddle
 
 STRUC Stone
-	index 			db 0	; index in array
+	;index 			db 0	; index in array
 	alive			db 1
-	color			db 0
+	;color			db 0
 ENDS Stone
 
 PROC movePaddleLeft
@@ -418,6 +418,51 @@ ENDP drawPaddle
 	; ret
 ; ENDP determineColor
 
+; PROC drawStones
+	; USES eax, ebx, ecx, edx
+	; mov ebx, offset stones_array
+	; mov ecx, COLSTONES*ROWSTONES
+; @@drawLoop:
+	; ; posx = STONESSTARTX + (index_position%COLSTONES) * STONEWIDTHCELL
+	; push ecx				; counter OP STACK
+	; xor edx, edx
+	; movzx eax, [ebx + Stone.index]
+	; mov ecx, COLSTONES
+	; div ecx
+	; mov eax, STONEWIDTHCELL
+	; mul edx
+	; add eax, STONESSTARTX
+	; push eax				; x-coördinaat OP STACK
+	; ; posy = STONESSTARTY + (index_position/COLSTONES) * STONEHEIGHTCELL
+	; xor edx, edx
+	; movzx eax, [ebx + Stone.index]
+	; div ecx
+	; mov edx, STONEHEIGHTCELL
+	; mul edx
+	; add eax, STONESSTARTY   ; eax bevat y-coördinaat
+	; pop edx					; x-coördinaat VAN STACK
+	; pop ecx					; counter VAN STACK
+	; ;call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
+	; call drawObject, edx, eax, offset gstone_array, STONEWIDTHPX, STONEHEIGHTPX
+	; add ebx, 3				; naar volgende struct gaan
+	; loop @@drawLoop
+	; ret
+; ENDP drawStones
+
+; ;; Indexen juist zetten
+; PROC initStones
+	; USES eax, ebx, ecx
+	; mov ecx, COLSTONES*ROWSTONES
+	; mov ebx, offset stones_array
+	; xor eax, eax
+; @@arrayLoop:	
+	; mov [ebx + Stone.index], al
+	; add ebx, 3					; naar volgende struct gaan
+	; inc eax
+	; loop @@arrayLoop
+	; ret
+; ENDP initStones
+
 PROC drawStones
 	USES eax, ebx, ecx, edx
 	mov ebx, offset stones_array
@@ -444,24 +489,10 @@ PROC drawStones
 	pop ecx					; counter VAN STACK
 	;call determineColor, ecx 	; returnt pointer naar nodige sprite in ebx
 	call drawObject, edx, eax, offset gstone_array, STONEWIDTHPX, STONEHEIGHTPX
-	add ebx, 3				; naar volgende struct gaan
+	inc ebx				; naar volgende struct gaan
 	loop @@drawLoop
 	ret
 ENDP drawStones
-
-;; Indexen juist zetten
-PROC initStones
-	USES eax, ebx, ecx
-	mov ecx, COLSTONES*ROWSTONES
-	mov ebx, offset stones_array
-	xor eax, eax
-@@arrayLoop:	
-	mov [ebx + Stone.index], al
-	add ebx, 3					; naar volgende struct gaan
-	inc eax
-	loop @@arrayLoop
-	ret
-ENDP initStones
 
 ;; Levens displayen (zie compendium)
 PROC displayString
@@ -519,7 +550,7 @@ PROC main
 	call readChunk, STONESIZEPX, offset rstone_array
 	call closeFile
 	
-	call initStones
+	;call initStones
 	
 	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
