@@ -22,9 +22,9 @@ INCLUDE "keyb.inc"		; library custom keyboard handler
 CODESEG
 
 ; # TODO LIJST #
-; - VERLIEST 1 LEVEN ALS DEZE ER NOG HEEFT ANDERS IS HET SPEL GEDAAN)
 ; - BESTANDEN HERORGANISEREN
 ; - BAL TRAGER LATEN BEWEGEN
+; - cmp met 0 vervangen door test
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -182,7 +182,7 @@ ENDS Ball
 STRUC Paddle
 	x 			db PADDLESTARTX
 	y 			db PADDLESTARTY
-	health 		db 3 
+	lives 		db 3 
 ENDS Paddle
 
 STRUC Stone
@@ -218,6 +218,12 @@ PROC movePaddleRight
 	ret
 ENDP movePaddleRight
 
+; PROC CheckCollisionStone
+	; USES
+	
+	; ret
+; ENDP CheckCollisionStone
+
 PROC moveBall
 
 ; TODO:
@@ -227,8 +233,9 @@ PROC moveBall
 ;	decrement het aantal levens van de bal en check of het aantal levens = 0
 	; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
 	; => zo nee, plaats de paddle en de ball weer op hun startpositie
-
-	USES eax, ebx, ecx, edx
+	ARG RETURNS eax
+	USES ebx, ecx, edx
+	xor eax, eax
 	mov ebx, offset ball_object
 	cmp [ebx + Ball.x_sense], RIGHT
 	je SHORT @@handleMoveRight
@@ -265,34 +272,35 @@ PROC moveBall
 	jmp SHORT @@end
 	
 @@handleMoveDown:
-	movzx eax, [ebx + Ball.y]
-	cmp eax, PADDLESTARTY-BALLHEIGHTCELL
+	mov edx, offset paddle_object
+	cmp [ebx + Ball.y], PADDLESTARTY-BALLHEIGHTCELL
 	jg SHORT @@belowPaddle
 	jl SHORT @@moveDown
-	movzx ecx, [ebx + Ball.x]
-	mov edx, offset paddle_object
-	movzx edx, [edx + Paddle.x]
-	sub edx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
-	cmp ecx, edx
+	movzx ecx, [edx + Paddle.x]
+	sub ecx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
+	cmp [ebx + Ball.x], cl
 	jl SHORT @@moveDown								; er is geen botsing, de ball zit links van de paddle
-	mov edx, offset paddle_object
-	movzx edx, [edx + Paddle.x]
-	add edx, PADDLEWIDTHCELL
-	cmp ecx, edx
+	movzx ecx, [edx + Paddle.x]
+	add ecx, PADDLEWIDTHCELL
+	cmp [ebx + Ball.x], cl
 	jg SHORT @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
 	mov [ebx + Ball.y_sense], UP
 	jmp SHORT @@end
 @@moveDown:
-	inc eax
-	mov [ebx + Ball.y], al
+	inc [ebx + Ball.y]
 	jmp SHORT @@end
 @@belowPaddle:
-	cmp eax, BOARDHEIGHT-BALLHEIGHTCELL
+	cmp [ebx + Ball.y], BOARDHEIGHT-BALLHEIGHTCELL
 	jne @@moveDown
+	dec [edx + Paddle.lives]
+	cmp [edx + Paddle.lives], 0
+	jg @@newChance
+	mov eax, 1
+	jmp @@end
+@@newChance:
 	mov [ebx + Ball.x], BALLSTARTX
 	mov [ebx + Ball.y], BALLSTARTY
 	mov [ebx + Ball.active], 0
-	mov edx, offset paddle_object
 	mov [edx + Paddle.x], PADDLESTARTX
 	mov [edx + Paddle.y], PADDLESTARTY
 	
@@ -302,12 +310,18 @@ ENDP moveBall
 
 ;; SPELLOGICA
 PROC gamelogistic
-	USES eax, ebx
+	ARG RETURNS eax
+	USES ebx
+	xor eax, eax
 	
 	mov ebx, offset ball_object
 	cmp [ebx + Ball.active], 0
-	je SHORT @@handle_input 
-	call moveBall									; bal beweegt enkel alleen als deze actief is
+	je SHORT @@handle_input
+	and cl, 1
+	jnz @@handle_input								; zodat de bal minder snel beweegt (beweegt maar één op de twee keer)
+	call moveBall									; bal beweegt enkel alleen als deze actief is (en de counter even is)
+	cmp eax, 1
+	je @@end
 
 @@handle_input:
 	cmp [offset __keyb_keyboardState + 39h], 1		; spatiebalk ingedrukt? 
@@ -386,9 +400,12 @@ ENDP drawPaddle
 
 PROC drawStones
 	USES eax, ebx, ecx, edx
-	;mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
+	mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
 	xor ecx, ecx	; counter op 0 zetten	
 @@drawLoop:
+	cmp [ebx + Stone.alive], 1
+	jne SHORT @@nextIteration
+	push ebx				; pointer naar volgende struct OP STACK
 	push ecx				; counter OP STACK
 	; posx = STONESSTARTX + (counter%COLSTONES) * STONEWIDTHCELL
 	mov eax, ecx 
@@ -425,7 +442,9 @@ PROC drawStones
 	pop eax					; y-coördinaat OP STACK
 	pop edx					; x-coördinaat VAN STACK
 	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
-	;inc ebx				; naar volgende struct gaan
+	pop ebx					; pointer naar volgende struct VAN STACK
+@@nextIteration:
+	inc ebx				; naar volgende struct gaan
 	inc ecx
 	cmp ecx, COLSTONES*ROWSTONES
 	jl @@drawLoop
@@ -493,14 +512,20 @@ PROC main
 	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
 	 
 	;; ------ GAME LOOP ------
+	
+	xor eax, eax		; eax gebruikt om te checken of het spel verder gaat (ja = 0 en nee = 1)
+	xor ecx, ecx		; gebruikt zodat onze bal trager beweegt (beweegt maar één op de twee keer)
+	
 @@gameloop:
 	
 	call wait_VBLANK
 	call fillBackground, 0
 	call gamelogistic
 	call drawlogistic
-		
-	loop @@gameloop
+	
+	inc ecx
+	cmp eax, 0
+	je @@gameloop
 	
 	call waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
