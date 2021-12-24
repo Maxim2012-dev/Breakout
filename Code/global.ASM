@@ -38,11 +38,14 @@ NRCOLOURS 		EQU 3
 ROWSPERCOLOUR 	EQU ROWSTONES/NRCOLOURS
 
 ;; 1 cel wordt voorgesteld als 4 pixels x 4 pixels.
-CELLWIDTH EQU 4		; celbreedte
-CELLHEIGHT EQU 4	; celhoogte
+CELLWIDTH 	EQU 4		; celbreedte
+CELLHEIGHT 	EQU 4	; celhoogte
 
-BOARDWIDTH EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
+BOARDWIDTH 	EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
 BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
+
+MESSAGEROW EQU 13
+MESSAGECOL EQU 15	
 
 ; bewegingsrichtingen
 

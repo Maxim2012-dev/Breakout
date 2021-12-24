@@ -453,22 +453,23 @@ ENDP drawStones
 
 ;; Levens displayen (zie compendium)
 PROC displayString
+ARG @@row:dword, @@column:dword, @@offset:dword
 USES eax, ebx, edx
-	mov edx, 0
-	mov ebx, 0
+	mov edx, [@@row]
+	mov ebx, [@@column]
 	mov ah, 02h
 	shl edx, 08h
 	mov dl, bl
 	mov bh, 0
 	int 10h
 	mov ah, 09h
-	mov edx, offset levens_string
+	mov edx, [@@offset]
 	int 21h
 	ret
 ENDP displayString
 	
 PROC drawlogistic
-	call displayString
+	call displayString, 0, 0, offset levens_string
 	call drawStones 
 	call drawBall
 	call drawPaddle
@@ -511,11 +512,11 @@ PROC main
 	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
 	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
 	 
-	;; ------ GAME LOOP ------
 	
 	xor eax, eax		; eax gebruikt om te checken of het spel verder gaat (ja = 0 en nee = 1)
 	xor ecx, ecx		; gebruikt zodat onze bal trager beweegt (beweegt maar één op de twee keer)
 	
+	;; ------ GAME LOOP ------
 @@gameloop:
 	
 	call wait_VBLANK
@@ -526,10 +527,19 @@ PROC main
 	inc ecx
 	cmp eax, 0
 	je @@gameloop
+	;; ------------------------
 	
-	; eax = 1 => game-over
-	; eax = 2 => you won
-	
+	cmp eax, 1			; eax = 1 => game-over
+	je SHORT @@displayGameOver
+	cmp eax, 2			; eax = 2 => you won
+	je SHORT @@displayWin
+
+@@displayGameOver:
+	call displayString, MESSAGEROW, MESSAGECOL, offset game_over_string
+	jmp SHORT @@waitForEscape
+@@displayWin:
+	call displayString, MESSAGEROW, MESSAGECOL, offset winning_string
+@@waitForEscape:	
 	call waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
 ENDP main
@@ -556,10 +566,12 @@ DATASEG
 	rstone_file		db "rstone", 0
 	;ystone_file		db "ystone", 0
 	
-	openErrorMsg 	db "could not open file", 13, 10, '$'
-	readErrorMsg 	db "could not read data", 13, 10, '$'
-	closeErrorMsg 	db "error during file closing", 13, 10, '$'
-	levens_string	db "Levens:", 7, 10, '$' 
+	openErrorMsg 		db "could not open file", 13, 10, '$'
+	readErrorMsg 		db "could not read data", 13, 10, '$'
+	closeErrorMsg 		db "error during file closing", 13, 10, '$'
+	levens_string		db "Levens:", 7, 10, '$'
+	game_over_string	db "GAME OVER!", 10, 10, '$'
+	winning_string		db "YOU WON!", 8, 10, '$'
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
 	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
