@@ -23,8 +23,8 @@ CODESEG
 
 ; # TODO LIJST #
 ; - BESTANDEN HERORGANISEREN
-; - BAL TRAGER LATEN BEWEGEN
 ; - cmp met 0 vervangen door test
+; - eventueel checkcollisionpaddle
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -526,6 +526,9 @@ PROC main
 	inc ecx
 	cmp eax, 0
 	je @@gameloop
+	
+	; eax = 1 => game-over
+	; eax = 2 => you won
 	
 	call waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
