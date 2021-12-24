@@ -469,6 +469,9 @@ USES eax, ebx, edx
 ENDP displayString
 	
 PROC drawlogistic
+	;mov ebx, offset paddle_object
+	; mov edx, [offset paddle_object + Paddle.lives]
+	; add dl, '0'		; omzetten naar karakter
 	call displayString, 0, 0, offset levens_string
 	call drawStones 
 	call drawBall
