@@ -429,9 +429,9 @@ PROC drawStones
 	pop ecx					; counter VAN STACK, aangezien de waarde van ecx ondertussen werd gewijzigd
 	push eax				; y-coördinaat OP STACK
 	push ecx				; counter terug OP STACK
-	; FORMULE NOG TOEVOEGEN
 	mov eax, ecx
 	mov ecx, COLSTONES*ROWSPERCOLOUR
+	; (offset_eerste_sprite + kleur_index * grootte_sprite)
 	xor edx, edx
 	div ecx							; quotiënt in eax
 	mov ebx, offset bstone_array	; offset eerste sprite in geheugen
@@ -469,10 +469,11 @@ USES eax, ebx, edx
 ENDP displayString
 	
 PROC drawlogistic
-	;mov ebx, offset paddle_object
-	; mov edx, [offset paddle_object + Paddle.lives]
-	; add dl, '0'		; omzetten naar karakter
-	call displayString, 0, 0, offset levens_string
+	mov ebx, offset paddle_object
+	movzx edx, [ebx + Paddle.lives]
+	add dl, '0'										; omzetten naar karakter
+	mov [levens_string + 8], dl
+	call displayString, 0, 0, offset levens_string	; levens tonen
 	call drawStones 
 	call drawBall
 	call drawPaddle
@@ -572,7 +573,7 @@ DATASEG
 	openErrorMsg 		db "could not open file", 13, 10, '$'
 	readErrorMsg 		db "could not read data", 13, 10, '$'
 	closeErrorMsg 		db "error during file closing", 13, 10, '$'
-	levens_string		db "Levens:", 7, 10, '$'
+	levens_string		db "Levens: ", 7, 10, '$'
 	game_over_string	db "GAME OVER!", 10, 10, '$'
 	winning_string		db "YOU WON!", 8, 10, '$'
 	
