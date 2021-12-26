@@ -15,192 +15,24 @@ ASSUME cs:_TEXT,ds:FLAT,es:FLAT,fs:FLAT,gs:FLAT
 
 INCLUDE "global.asm"
 INCLUDE "keyb.inc"		; library custom keyboard handler
-
+INCLUDE "algeproc.asm"
 ; -------------------------------------------------------------------
 ; CODE
 ; -------------------------------------------------------------------
 CODESEG
 
-; # TODO LIJST #
-; - BESTANDEN HERORGANISEREN
-; - cmp met 0 vervangen door test
-; - eventueel checkcollisionpaddle
-; - procedure schrijven voor het checken van een range
-; - macro's WON en GAMEOVER gebruiken
-
-; video mode aanpassen
-PROC setVideoMode
-	ARG @@VM:byte
-	USES eax
-
-	movzx ax,[@@VM] ; movzx = move zero extend
-	int 10h
-
-	ret
-ENDP setVideoMode
-
-; programma beïndigen
-PROC terminateProcess
-	USES eax
-	call setVideoMode, 03h
-	mov	ax,04C00h
-	int 21h
-	ret
-ENDP terminateProcess
-
-; Wait for a specific keystroke.
-PROC waitForSpecificKeystroke
-	ARG @@key:byte
-	USES eax
-
-@@waitForKeystroke:
-	mov	ah, 00h
-	int	16h
-	cmp	al, [@@key]
-	jne	@@waitForKeystroke
-
-	ret
-ENDP waitForSpecificKeystroke
-
-; wait for @@framecount frames
-PROC wait_VBLANK
-	USES eax, edx
-	mov dx, 03dah ; Wait for screen refresh
-	
-@@VBlank_phase1: ; wait for end
-	in al, dx 
-	and al, 8
-	jnz @@VBlank_phase1
-@@VBlank_phase2: ; wait for begin
-	in al, dx 
-	and al, 8
-	jz @@VBlank_phase2
-	
-	ret 
-ENDP wait_VBLANK
-
-PROC openFile ; de offset van een variabele neemt 32 bits in beslag
-	ARG	@@file:dword ; @@file ==> adres van bestandsnaam/verwijzing naar nodige bestand in DATASEG
-	USES eax, ecx, edx
-	mov al, 0 ; read only
-	mov edx, [@@file] ; adres van bestandsnaam/verwijzing naar bestand in edx stoppen, register gebruikt voor I/O operaties
-	mov ah, 3dh ; mode om een bestand te openen
-	int 21h
-	
-	jnc SHORT @@no_error ; carry flag is set if error occurs, indien de CF dus niet geactieveerd is, is er geen error en springt men naar de no_error label
-
-	; Print string.
-	call setVideoMode, 03h ; plaatst mode weer in text mode 
-	mov  ah, 09h ; om een string te kunnen printen
-	mov  edx, offset openErrorMsg ; string die geprint moet worden
-	int  21h
-	
-	; wacht op het indrukken van een toets en geeft terug welke deze is, maar dat is niet van belang, daar wordt niets mee gedaan, VRAAG: WAAROM WACHT DIT EIGENLIJK OP EEN TOETS INVOER? IK MOET TOCH NIET OP EEN TOETS DRUKKEN.
-	mov	 ah, 00h
-	int	 16h
-	call terminateProcess ; proces beïndigen aangezien er een error was
-	
-@@no_error:
-	mov [filehandle], ax ; INT 21h (AH=3Dh) zal in AX de filehandle teruggeven, variabele "filehandle" herbruiken voor de verschillende bestanden 
-	ret
-ENDP openFile
-
-PROC closeFile
-	USES eax, ebx, ecx, edx ; VRAAG: REGISTER ECX TOCH NIET NODIG? (WANT DEZE WORDT GEPRESERVED IN DANCER)
-	mov bx, [filehandle]
-	mov ah, 3Eh ; mode om een bestand te sluiten
-	int 21h
-	
-	jnc SHORT @@no_error ; carry flag is set if error occurs
-
-	call setVideoMode, 03h
-	mov  ah, 09h
-	mov  edx, offset closeErrorMsg
-	int  21h
-	
-	mov	ah,00h
-	int	16h
-	call terminateProcess
-	
-@@no_error:
-	ret
-ENDP closeFile
-
-PROC readChunk
-	ARG @@sprite_size:word, @@arrayptr:dword ; @@sprite_size ==> getal die overeenkomt met aantal pixels van sprite, @@arrayptr ==> adres van array die de indices van de nodige kleuren voor elke pixel zal bijhouden
-	USES eax, ebx, ecx, edx
-	mov bx, [filehandle]
-	mov cx, [@@sprite_size]
-	mov edx, [@@arrayptr] 
-	mov ah, 3fh								
-	int 21h
-	
-	jnc SHORT @@no_error  	
-	
-	call setVideoMode, 03h
-	mov  ah, 09h
-	mov  edx, offset readErrorMsg
-	int  21h
-	
-	mov	ah,00h
-	int	16h
-	call terminateProcess
-	
-@@no_error:
-	ret
-ENDP readChunk
-
-; Fill the background (for mode 13h)
-; (faster, uses stosd optimization)
-PROC fillBackground
-	ARG @@fillcolor:byte ; input color, index van kleur in kleurenpalet
-	USES eax, ecx, edi
-
-	; Initialize video memory address.
-	mov	edi, VIDMEMADR
-	
-	; copy color value across all bytes of eax
-	mov al, [@@fillcolor]	; ???B
-	mov ah, al				; ??BB
-	mov cx, ax			
-	shl eax, 16				; BB00
-	mov ax, cx				; BBBB
-
-	; Scan the whole video memory and assign the background colour.
-	mov	ecx, SCRWIDTH*SCRHEIGHT/4 ; delen door 4 omdat we in elke iteratie 4 pixels vullen
-	rep	stosd ; Fill (E)CX doublewords at ES:[(E)DI] with EAX
-
-	ret
-ENDP fillBackground
-
-STRUC Ball
-	x			db BALLSTARTX ; min_x: 0, max_x: 78 (in cellen)
-	y			db BALLSTARTY ; min_y: 0, max_y: 48
-	active		db 0 ; 0 bal beweegt nog niet alleen (beweegt dus samen met paddle), 1 bal beweegt wel alleen
-	x_sense		db LEFT
-	y_sense		db UP
-ENDS Ball
-
-STRUC Paddle
-	x 			db PADDLESTARTX
-	y 			db PADDLESTARTY
-	lives 		db 3 
-ENDS Paddle
-
-STRUC Stone
-	alive			db 1
-ENDS Stone
+;; # SPELLOGICA #
 
 PROC movePaddleLeft
 	USES ebx
 	mov ebx, offset paddle_object
-	cmp [ebx + Paddle.x], 0
+	cmp [ebx + Paddle.x], 0 			; Paddle linkergrens scherm?
 	je SHORT @@end
 	dec [ebx + Paddle.x]
-	mov ebx, offset ball_object			; checken of de bal mee moet bewegen
-	cmp [ebx + Ball.active], 1
+	mov ebx, offset ball_object			
+	cmp [ebx + Ball.active], 1			; Beweegt bal mee? Dit gebeurt enkel wanneer de bal nog niet actief is.
 	je SHORT @@end
-	dec [ebx + Ball.x]					; bal naar links bewegen
+	dec [ebx + Ball.x]					; bal mee bewegen
 @@end:
 	ret
 ENDP movePaddleLeft
@@ -208,48 +40,50 @@ ENDP movePaddleLeft
 PROC movePaddleRight
 	USES ebx
 	mov ebx, offset paddle_object
-	cmp [ebx + Paddle.x], BOARDWIDTH-PADDLEWIDTHCELL ; x-waarde van paddle-object vergelijken met grootst mogelijke x-waarde voor het paddle-object 
+	cmp [ebx + Paddle.x], BOARDWIDTH-PADDLEWIDTHCELL	; Paddle rechtergrens scherm? 
 	je SHORT @@end
 	inc [ebx + Paddle.x]
-	; checken of de bal mee moet bewegen
 	mov ebx, offset ball_object
 	cmp [ebx + Ball.active], 1
 	je SHORT @@end
-	inc [ebx + Ball.x] ; bal naar rechts bewegen
+	inc [ebx + Ball.x]									; bal naar rechts bewegen
 @@end:
 	ret
 ENDP movePaddleRight
 
-; checken of er nog stenen overblijven
+; Blijven er nog stenen over?
+; Ja => eax = 0, doorgeven aan moveBall die het doorgeeft aan gamelogistic zodat de gameloop uiteindelijk niet stopt
+; Nee => eax = 2 (waarde van macro WON), gameloop wordt onderbroken, aangezien de speler dan heeft gewonnen en het spel gedaan is
 
-PROC StonesAlive
+PROC StonesAlive  
 	ARG RETURNS eax
 	USES ebx, ecx, edx
 	mov ebx, offset stones_array
-	xor ecx, ecx
-	mov edx, ROWSTONES * COLSTONES
-	
+	xor ecx, ecx						; counter initialiseren
+	mov edx, ROWSTONES * COLSTONES	
 @@loop:
-	cmp [ebx + Stone.alive], 0
+	cmp [ebx + Stone.alive], 0			; Steen "levend"? Indien een steen "levend" is, weten we dat alle stenen nog niet werden vernietigd en heeft de speler dus nog niet gewonnen.
 	je SHORT @@nextIteration
 	xor eax, eax
 	ret
-	
 @@nextIteration:
-	inc ebx
+	inc ebx								; ga naar volgende steen-object
 	inc ecx
 	cmp ecx, edx
 	jl @@loop
-	
 @@end:
 	mov eax, WON
 	ret
 
 ENDP StonesAlive
 
-; StoneAlive: checken of er een overlapping is tussen de bal en een steen
+; Index van bijhorende steen in array bepalen a.d.h.v. volgende formule: ((xPos - STONESSTARTX)  / STONEWIDTHCELL) + COLSTONES * ((yPos - STONESSTARTY) / STONEHEIGHTCELL), waarbij xPos en yPos de coördinaten van een "hoekpunt" van de bal voorstellen
+; Wanneer we vervolgens het bijhorend steen-object vast hebben, controleren we of deze nog "levend" is of niet.
+; Het resultaat geven we vervolgens in register eax terug: 
+;	1 staat voor de steen bestaat
+;   0 staat voor de steen is al vernietigd geweest
 
-PROC StoneAlive ; index van bijhorende steen in array a.d.h.v. volgende formule bepalen: ((xPos - STONESSTARTX)  / STONEWIDTHCELL) + COLSTONES * ((yPos - STONESSTARTY) / STONEHEIGHTCELL), ZIE TEKENING TABLET VOOR VERDUIDELIJKING
+PROC StoneAlive 
 	ARG @@xPos:byte, @@yPos:byte RETURNS eax
 	USES ebx, ecx, edx
 	movzx eax, [@@xPos]
@@ -257,21 +91,26 @@ PROC StoneAlive ; index van bijhorende steen in array a.d.h.v. volgende formule 
 	mov ecx, STONEWIDTHCELL
 	xor edx, edx
 	div ecx
-	mov ebx, eax ; eerst gedeelte van bewerking in ebx steken
+	mov ebx, eax 						; eerst gedeelte van bewerking in ebx steken
 	movzx eax, [@@yPos]
 	sub eax, STONESSTARTY
 	mov ecx, STONEHEIGHTCELL
 	xor edx, edx
-	div ecx ; quotiënt komt in eax
+	div ecx 							; quotiënt komt in eax
 	mov edx, COLSTONES
 	mul edx
-	add eax, ebx ; index zit in eax 
+	add eax, ebx 						; index van steen zit in eax 
 	mov ebx, offset stones_array
-	add ebx, eax ; juiste stone-object accessen (elke stone-object is maar 1 byte groot)
-	movzx eax, [ebx + Stone.alive] ; resultaat in eax steken, deze waarde zullen we returnen, houd bij of er nu werkelijk een steen op die plaats was of als deze al is verdwenen
-	mov [ebx + Stone.alive], 0
+	add ebx, eax 						; juiste stone-object accessen (elke stone-object is maar 1 byte groot)
+	movzx eax, [ebx + Stone.alive] 		; resultaat in eax steken
+	mov [ebx + Stone.alive], 0			; steen vernietigen (misschien was deze al vernietigd, maar dit kan geen kwaad, dan wordt gwn dezelfde waarde weer geschreven)
 	ret
 ENDP StoneAlive
+
+; Is er overlapping tussen de bal en minstens één steen?
+; We controleren eerst of de bal zich binnen de grote blok van stenen bevindt.
+; Zo ja, dan controleren we of de steen op die plaats nog "levend" is of niet a.d.h.v. de procedure "StoneAlive"
+; Zo nee, dan is er geen botsing mogelijk en wordt de waarde 0 in eax gestoken
 
 PROC CheckCollisionStone
 	ARG @@xPosBall:byte, @@yPosBall:byte RETURNS eax
@@ -279,24 +118,32 @@ PROC CheckCollisionStone
 	cmp [@@yPosBall], STONESSTARTY			; we vergelijken eerst de y-coördinaten omdat er minder kans is dat deze matchen, aangezien de blok stenen breder is dan dat ze hoog is
 	jl SHORT @@noCollision
 	cmp [@@yPosBall], STONESSTARTY + STONEHEIGHTCELL*ROWSTONES
-	jge SHORT @@noCollision
-	; als men hier terecht komt, weet men al dat de y-coördinaten matchen
-	cmp [@@xPosBall], STONESSTARTX
+	jge SHORT @@noCollision				
+	cmp [@@xPosBall], STONESSTARTX			; als men hier terecht komt, weet men al dat de y-coördinaten matchen, nu checkt men de x-coördinaten
 	jl SHORT @@noCollision
 	cmp [@@xPosBall], STONESSTARTX + STONEWIDTHCELL*COLSTONES
 	jge SHORT @@noCollision
-	; als men hier komt hebben we een volledige match, zowel op de x- als op de y-coördinaat, de bal bevindt zich dus in de grote blok stenen (misschien is de steen op die plaats wel al verdwenen)
-	
-	movzx eax, [@@xPosBall]
+	movzx eax, [@@xPosBall] 				; als men hier terecht komt, hebben we een volledige match, de bal bevindt zich dus in de grote blok stenen (misschien is de steen op die plaats wel al verdwenen)
 	movzx ebx, [@@yPosBall]
-
-	call StoneAlive, eax, ebx
+	call StoneAlive, eax, ebx				; controleren of de steen op die plaats nog "levend" is
 	ret
 
 @@noCollision:
 	xor eax, eax
 	ret
 ENDP CheckCollisionStone
+
+; Bal laten bewegen, hier worden alle condities voor het bewegen van een bal gecontroleerd.
+; Geldt voor alle bewegingsrichtingen:
+; 		- Checken of de bal niet tegen de bijhorende schermgrens botst (linker schermgrens voor linkse beweging enz.)
+;		- Checken of de bal niet een steen vernietigde door deze te raken, zo ja => checken of er nog stenen overblijven
+; 				- Voor deze collision check moeten we steeds te werk gaan met de twee bijhorende "hoekpunten" van de bal (twee linkse "hoekpunten" voor linkse beweging enz.) zie verduidelijking verslag indien nodig 
+; Beweging naar beneden is een speciaal geval:
+;		- Indien men zich juist boven de paddle bevindt dan checkt 
+; Resultaat:
+; 	- eax bevat waarde 0 indien het spel verder gaat
+;	- eax bevat waarde 1 indien de speler heeft verloren
+;	- eax bevat waarde 2 indien de speler heeft gewonnen
 
 PROC moveBall
 
@@ -309,20 +156,20 @@ PROC moveBall
 	je SHORT @@handleMoveRight
 	
 @@handleMoveLeft:
-	cmp ecx, 0
-	je SHORT @@leftToRight 
-	dec ecx ; simulatie van beweging naar links, zodat men controleert of er een overlapping zou zijn bij beweging, voordat men de beweging echt uitvoert
+	test ecx, ecx 							; equivalent aan "comp ecx, 0", checken of er geen botsing is met de linker schermgrens
+	jz SHORT @@leftToRight 					; gevolgd door "je SHORT @@leftToRight"
+	dec ecx 								; simulatie van beweging naar links, zodat men controleert of er een overlapping zou zijn bij beweging, voordat men de beweging echt uitvoert
 	call CheckCollisionStone, ecx, edx
-	push eax ; resultaat van eerste call OP STACK plaatsen
-	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	push eax 								; resultaat van eerste call OP STACK plaatsen
+	add edx, BALLHEIGHTCELL 				; zie indien nodig verantwoording figuur1 deel 3.5 van verslag 
 	call CheckCollisionStone, ecx, edx
-	pop ecx ; resultaat van eerste call VAN STACK halen
+	pop ecx 								; resultaat van eerste call VAN STACK halen
 	or eax, ecx
-	cmp eax, 0 ; bij het bewegen naar de aangegeven richting zou er botsing ontstaan 	;MISSCHIEN KAN DIT KORTER DOOR METEEN JZ TE GEBRUIKEN EN GEEN CMP
-	je SHORT @@moveLeft
-	call StonesAlive ; checken of er nog stenen overblijven, aangezien er minstens één werd vernietigd
-	cmp eax, 0
-	je SHORT @@leftToRight
+	test eax, eax 							; Heeft minstens één van de 2 hoekpunten van de bal een steen geraakt/vernietigd? Zo nee, beweeg
+	jz SHORT @@moveLeft
+	call StonesAlive 						; checken of er nog stenen overblijven, aangezien er minstens één werd vernietigd
+	test eax, eax
+	jz SHORT @@leftToRight					; Zo nee, dan bevat eax waarde 1 (komt overeen met waarde van macro "WON") en is de spel gedaan
 	ret
 @@moveLeft:
 	dec [ebx + Ball.x]
@@ -334,19 +181,19 @@ PROC moveBall
 @@handleMoveRight:
 	cmp ecx, BOARDWIDTH-BALLWIDTHCELL
 	je SHORT @@rightToLeft
-	inc ecx ; simulatie van beweging naar rechts
-	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	inc ecx 								; simulatie van beweging naar rechts
+	add ecx, BALLWIDTHCELL 					; zie indien nodig verantwoording figuur1 deel 3.5 van verslag
 	call CheckCollisionStone, ecx, edx
 	push eax
-	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	add edx, BALLHEIGHTCELL 				; zie indien nodig verantwoording figuur1 deel 3.5 van verslag
 	call CheckCollisionStone, ecx, edx
 	pop ecx
 	or eax, ecx
-	cmp eax, 0
-	je SHORT @@moveRight
+	test eax, eax
+	jz SHORT @@moveRight
 	call StonesAlive
-	cmp eax, 0
-	je SHORT @@rightToLeft
+	test eax, eax
+	jz SHORT @@rightToLeft
 	ret
 @@moveRight:
 	inc [ebx + Ball.x]
@@ -361,21 +208,21 @@ PROC moveBall
 	je SHORT @@handleMoveUp
 	jmp SHORT @@handleMoveDown
 	
-@@handleMoveUp: ; TOT HIER GEKOMEN
-	cmp edx, 0
-	je SHORT @@upToDown
-	dec edx ; simulatie van beweging naar boven
+@@handleMoveUp:
+	test edx, edx
+	jz SHORT @@upToDown
+	dec edx 								; simulatie van beweging naar boven
 	call CheckCollisionStone, ecx, edx
 	push eax
-	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	add ecx, BALLWIDTHCELL 					; zie indien nodig verantwoording figuur1 deel 3.5 van verslag
 	call CheckCollisionStone, ecx, edx
 	pop ecx
 	or eax, ecx
-	cmp eax, 0
-	je SHORT @@moveUp
+	test eax, eax
+	jz SHORT @@moveUp
 	call StonesAlive
-	cmp eax, 0
-	je SHORT @@upToDown
+	test eax, eax
+	jz SHORT @@upToDown
 	ret
 @@moveUp:
 	dec [ebx + Ball.y]
@@ -388,31 +235,31 @@ PROC moveBall
 	cmp [ebx + Ball.y], PADDLESTARTY-BALLHEIGHTCELL
 	jg SHORT @@belowPaddle
 	jl SHORT @@checkCollisionStone
-; collision met paddle checken
+	; collision met paddle checken, volgens x-coördinaat aangezien we dankzij de bovenstaande checks al weten dat de y-coördinaat matcht
 	mov edx, offset paddle_object
 	movzx ecx, [edx + Paddle.x]
-	sub ecx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
+	sub ecx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL verminderen
 	cmp [ebx + Ball.x], cl
-	jl SHORT @@moveDown								; er is geen botsing, de ball zit links van de paddle
+	jl SHORT @@moveDown							; er is geen botsing, de ball zit links van de paddle
 	movzx ecx, [edx + Paddle.x]
 	add ecx, PADDLEWIDTHCELL
 	cmp [ebx + Ball.x], cl
-	jg SHORT @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
+	jg SHORT @@moveDown							; er is geen botsing, de ball zit rechts van de paddle
 	jmp SHORT @@downToUp
 @@checkCollisionStone:
-	inc edx ; simulatie van beweging naar beneden
-	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	inc edx 									; simulatie van beweging naar beneden
+	add edx, BALLHEIGHTCELL 					; zie indien nodig verantwoording figuur1 deel 3.5 van verslag
 	call CheckCollisionStone, ecx, edx
 	push eax
-	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	add ecx, BALLWIDTHCELL 						; zie indien nodig verantwoording figuur1 deel 3.5 van verslag
 	call CheckCollisionStone, ecx, edx
 	pop ecx
 	or eax, ecx
-	cmp eax, 0
-	je SHORT @@moveDown
+	test eax, eax
+	jz SHORT @@moveDown
 	call StonesAlive
-	cmp eax, 0
-	je SHORT @@downToUp
+	test eax, eax
+	jz SHORT @@downToUp
 	ret
 @@moveDown:
 	inc [ebx + Ball.y]
@@ -422,14 +269,14 @@ PROC moveBall
 	jmp SHORT @@end
 @@belowPaddle:
 	mov edx, offset paddle_object
-	cmp [ebx + Ball.y], BOARDHEIGHT-BALLHEIGHTCELL
+	cmp [ebx + Ball.y], BOARDHEIGHT-BALLHEIGHTCELL 	; checken of er geen botsing is met de onder schermgrens
 	jne @@moveDown
-	dec [edx + Paddle.lives]
+	dec [edx + Paddle.lives]						; indien er wel een botsing was, verminder het aantal levens van de speler/peddel en ga na of deze er nog heeft
 	cmp [edx + Paddle.lives], 0
 	jg SHORT @@newChance
-	mov eax, 1
+	mov eax, GAMEOVER
 	ret
-@@newChance:
+@@newChance:										; indien de speler/peddel nog levens had, krijgt deze een nieuwe kans en wordt de bal en peddel weer op de startpositie geplaatst 
 	mov [ebx + Ball.x], BALLSTARTX
 	mov [ebx + Ball.y], BALLSTARTY
 	mov [ebx + Ball.active], 0
@@ -441,7 +288,6 @@ PROC moveBall
 	ret
 ENDP moveBall
 
-;; SPELLOGICA
 PROC gamelogistic
 	ARG RETURNS eax
 	USES ebx
@@ -449,12 +295,12 @@ PROC gamelogistic
 	
 	mov ebx, offset ball_object
 	cmp [ebx + Ball.active], 0
-	je SHORT @@handle_input
+	je SHORT @@handle_input							; indien de bal niet actief is, slaag het gedeelte waar men deze laat bewegen over
 	and cl, 1
-	jnz SHORT @@handle_input								; zodat de bal minder snel beweegt (beweegt maar één op de twee keer)
+	jnz SHORT @@handle_input						; zodat de bal minder snel beweegt (beweegt maar één op de twee keer)
 	call moveBall									; bal beweegt enkel alleen als deze actief is (en de counter even is)
-	cmp eax, 0
-	jne SHORT @@end
+	test eax, eax
+	jnz SHORT @@end
 
 @@handle_input:
 	cmp [offset __keyb_keyboardState + 39h], 1		; spatiebalk ingedrukt? 
@@ -469,7 +315,7 @@ PROC gamelogistic
 	jmp SHORT @@end
 
 @@makeBallActive:
-	mov [ebx + Ball.active], 1		; op actief zetten
+	mov [ebx + Ball.active], 1						; bal activeren
 	jmp SHORT @@end
 @@moveRight:
 	call movePaddleRight
@@ -479,7 +325,9 @@ PROC gamelogistic
 	
 @@end:
 	ret
-ENDP gamelogistic 
+ENDP gamelogistic
+
+;; # TEKENLOGICA #
 
 ;; Generische tekenprocedure
 PROC drawObject
@@ -533,12 +381,12 @@ ENDP drawPaddle
 
 PROC drawStones
 	USES eax, ebx, ecx, edx
-	mov ebx, offset stones_array		; hebben we later miss nog nodig om te checken of de stenen 'alive' zijn
-	xor ecx, ecx	; counter op 0 zetten	
+	mov ebx, offset stones_array
+	xor ecx, ecx			; counter op 0 zetten	
 @@drawLoop:
 	cmp [ebx + Stone.alive], 1
-	jne SHORT @@nextIteration
-	push ebx				; pointer naar volgende struct OP STACK
+	jne SHORT @@nextIteration	; indien de steen niet meer "levend" is, mag je deze niet meer tekenen
+	push ebx				; pointer naar struct OP STACK
 	push ecx				; counter OP STACK
 	; posx = STONESSTARTX + (counter%COLSTONES) * STONEWIDTHCELL
 	mov eax, ecx 
@@ -575,19 +423,19 @@ PROC drawStones
 	pop eax					; y-coördinaat OP STACK
 	pop edx					; x-coördinaat VAN STACK
 	call drawObject, edx, eax, ebx, STONEWIDTHPX, STONEHEIGHTPX
-	pop ebx					; pointer naar volgende struct VAN STACK
+	pop ebx					; pointer naar struct VAN STACK
 @@nextIteration:
-	inc ebx				; naar volgende struct gaan
+	inc ebx					; naar volgende struct gaan
 	inc ecx
 	cmp ecx, COLSTONES*ROWSTONES
 	jl @@drawLoop
 	ret
 ENDP drawStones
 
-;; Levens displayen (zie compendium)
+; gebruikt om messages te displayen
 PROC displayString
-ARG @@row:dword, @@column:dword, @@offset:dword
-USES eax, ebx, edx
+	ARG @@row:dword, @@column:dword, @@offset:dword
+	USES eax, ebx, edx
 	mov edx, [@@row]
 	mov ebx, [@@column]
 	mov ah, 02h
@@ -600,13 +448,20 @@ USES eax, ebx, edx
 	int 21h
 	ret
 ENDP displayString
-	
-PROC drawlogistic
+
+; aantal levens van speler/peddel in de linkerbovenhoek van het scherm displayen
+PROC displayLives
+	USES ebx, edx
 	mov ebx, offset paddle_object
 	movzx edx, [ebx + Paddle.lives]
 	add dl, '0'										; omzetten naar karakter
 	mov [levens_string + 8], dl
-	call displayString, 0, 0, offset levens_string	; levens tonen
+	call displayString, 0, 0, offset levens_string
+	ret
+ENDP displayLives
+	
+PROC drawlogistic
+	call displayLives
 	call drawStones 
 	call drawBall
 	call drawPaddle
@@ -621,7 +476,6 @@ PROC main
 	pop	es           
 
 	call setVideoMode, 13h
-	call fillBackground, 0
 	
 	call __keyb_installKeyboardHandler
 	
@@ -645,37 +499,33 @@ PROC main
 	call readChunk, STONESIZEPX, offset rstone_array
 	call closeFile
 	
-	; Handmatig loop maken, we kennen bijvoorbeeld aan eax waarde 1 toe juist voor onze loop.
-	; We blijven iteren zolang eax niet gelijk is aan 0 (jump if not zero).
-	; De procedure gamelogistic geeft bijvoorbeeld steeds een waarde terug die we aan eax kennen, het geeft 0 terug als het spel gedaan is, de speler heeft verloren of gewonnen.
-	 
-	
-	xor eax, eax		; eax gebruikt om te checken of het spel verder gaat (ja = 0 en nee = 1)
+	xor eax, eax		; eax gebruikt om te checken of het spel verder gaat (ja = 0 en nee = andere)
 	xor ecx, ecx		; gebruikt zodat onze bal trager beweegt (beweegt maar één op de twee keer)
 	
 	;; ------ GAME LOOP ------
+	; De procedure gamelogistic geeft een waarde terug in eax, indien deze gelijk is aan 0 gaat het spel verder,
+	;														   indien deze gelijk is aan 1 heeft de speler verloren,
+	;														   anders (indien deze gelijk is aan 2) heeft de speler gewonnen 
 @@gameloop:
 	
 	call wait_VBLANK
-	call fillBackground, 0
+	call fillBackground, 0 ; achtegrond zwart maken
 	call gamelogistic
 	call drawlogistic
 	
 	inc ecx
-	cmp eax, 0
-	je @@gameloop
+	test eax, eax
+	jz @@gameloop
 	;; ------------------------
 	
-	cmp eax, 1			; eax = 1 => game-over
+	cmp eax, GAMEOVER
 	je SHORT @@displayGameOver
-	cmp eax, 2			; eax = 2 => you won
-	je SHORT @@displayWin
-
-@@displayGameOver:
-	call displayString, MESSAGEROW, MESSAGECOL, offset game_over_string
-	jmp SHORT @@waitForEscape
+	
 @@displayWin:
 	call displayString, MESSAGEROW, MESSAGECOL, offset winning_string
+	jmp SHORT @@waitForEscape
+@@displayGameOver:
+	call displayString, MESSAGEROW, MESSAGECOL, offset game_over_string
 @@waitForEscape:	
 	call waitForSpecificKeystroke, 001Bh ; wacht tot de escape-toets wordt ingedrukt
 	call terminateProcess
@@ -685,11 +535,6 @@ ENDP main
 ; -------------------------------------------------------------------
 ; DATA
 ; -------------------------------------------------------------------
-
-; INSTANTIES VAN STRUCTS MAKEN, behouden zodat we weten hoe het moet!
-
-;x position 10 dup < 1, 2 > ; een lijst van 10 position structs
-;y position < , > ; een position struct met de standaardwaarden (d.w.z. 0 en 0)
 
 DATASEG
 	ball_object 	Ball < >
@@ -701,7 +546,6 @@ DATASEG
 	bstone_file		db "bstone", 0
 	gstone_file 	db "gstone", 0
 	rstone_file		db "rstone", 0
-	;ystone_file		db "ystone", 0
 	
 	openErrorMsg 		db "could not open file", 13, 10, '$'
 	readErrorMsg 		db "could not read data", 13, 10, '$'
@@ -711,13 +555,12 @@ DATASEG
 	winning_string		db "YOU WON!", 8, 10, '$'
 	
 UDATASEG ; unitialised datasegment, zoals declaratie in C
-	filehandle dw ? ; Één filehandle is volgens mij genoeg, aangezien je deze maar één keer nodig zal hebben per bestand kan je die hergebruiken, VRAAG: WAAROM dw ALS DATATYPE?
+	filehandle dw ? ; Één filehandle, herbruikt voor de verschillende bestanden
 	ball_array db BALLSIZEPX dup (?)
 	paddle_array db PADDLESIZEPX dup (?)
 	bstone_array db STONESIZEPX dup (?)
 	gstone_array db STONESIZEPX dup (?)
 	rstone_array db STONESIZEPX dup (?)
-	;ystone_array db STONESIZEPX dup (?)
 ; -------------------------------------------------------------------
 ; STACK
 ; -------------------------------------------------------------------
