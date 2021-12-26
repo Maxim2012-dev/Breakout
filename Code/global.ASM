@@ -47,12 +47,15 @@ BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 MESSAGEROW EQU 13
 MESSAGECOL EQU 15	
 
+GAMEOVER EQU 1
+WON EQU 2
+
 ; bewegingsrichtingen
 
 LEFT 	EQU 0
 RIGHT 	EQU 1
-UP 		EQU 0
-DOWN 	EQU 1
+UP 		EQU 2
+DOWN 	EQU 3
 
 ; -------------------------------------------------------------------
 ; CODE

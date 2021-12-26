@@ -25,6 +25,8 @@ CODESEG
 ; - BESTANDEN HERORGANISEREN
 ; - cmp met 0 vervangen door test
 ; - eventueel checkcollisionpaddle
+; - procedure schrijven voor het checken van een range
+; - macro's WON en GAMEOVER gebruiken
 
 ; video mode aanpassen
 PROC setVideoMode
@@ -218,64 +220,176 @@ PROC movePaddleRight
 	ret
 ENDP movePaddleRight
 
-; PROC CheckCollisionStone
-	; USES
+; checken of er nog stenen overblijven
+
+PROC StonesAlive
+	ARG RETURNS eax
+	USES ebx, ecx, edx
+	mov ebx, offset stones_array
+	xor ecx, ecx
+	mov edx, ROWSTONES * COLSTONES
 	
-	; ret
-; ENDP CheckCollisionStone
+@@loop:
+	cmp [ebx + Stone.alive], 0
+	je SHORT @@nextIteration
+	xor eax, eax
+	ret
+	
+@@nextIteration:
+	inc ebx
+	inc ecx
+	cmp ecx, edx
+	jl @@loop
+	
+@@end:
+	mov eax, WON
+	ret
+
+ENDP StonesAlive
+
+; StoneAlive: checken of er een overlapping is tussen de bal en een steen
+
+PROC StoneAlive ; index van bijhorende steen in array a.d.h.v. volgende formule bepalen: ((xPos - STONESSTARTX)  / STONEWIDTHCELL) + COLSTONES * ((yPos - STONESSTARTY) / STONEHEIGHTCELL), ZIE TEKENING TABLET VOOR VERDUIDELIJKING
+	ARG @@xPos:byte, @@yPos:byte RETURNS eax
+	USES ebx, ecx, edx
+	movzx eax, [@@xPos]
+	sub eax, STONESSTARTX
+	mov ecx, STONEWIDTHCELL
+	xor edx, edx
+	div ecx
+	mov ebx, eax ; eerst gedeelte van bewerking in ebx steken
+	movzx eax, [@@yPos]
+	sub eax, STONESSTARTY
+	mov ecx, STONEHEIGHTCELL
+	xor edx, edx
+	div ecx ; quotiënt komt in eax
+	mov edx, COLSTONES
+	mul edx
+	add eax, ebx ; index zit in eax 
+	mov ebx, offset stones_array
+	add ebx, eax ; juiste stone-object accessen (elke stone-object is maar 1 byte groot)
+	movzx eax, [ebx + Stone.alive] ; resultaat in eax steken, deze waarde zullen we returnen, houd bij of er nu werkelijk een steen op die plaats was of als deze al is verdwenen
+	mov [ebx + Stone.alive], 0
+	ret
+ENDP StoneAlive
+
+PROC CheckCollisionStone
+	ARG @@xPosBall:byte, @@yPosBall:byte RETURNS eax
+	USES ebx, ecx, edx
+	cmp [@@yPosBall], STONESSTARTY			; we vergelijken eerst de y-coördinaten omdat er minder kans is dat deze matchen, aangezien de blok stenen breder is dan dat ze hoog is
+	jl SHORT @@noCollision
+	cmp [@@yPosBall], STONESSTARTY + STONEHEIGHTCELL*ROWSTONES
+	jge SHORT @@noCollision
+	; als men hier terecht komt, weet men al dat de y-coördinaten matchen
+	cmp [@@xPosBall], STONESSTARTX
+	jl SHORT @@noCollision
+	cmp [@@xPosBall], STONESSTARTX + STONEWIDTHCELL*COLSTONES
+	jge SHORT @@noCollision
+	; als men hier komt hebben we een volledige match, zowel op de x- als op de y-coördinaat, de bal bevindt zich dus in de grote blok stenen (misschien is de steen op die plaats wel al verdwenen)
+	
+	movzx eax, [@@xPosBall]
+	movzx ebx, [@@yPosBall]
+
+	call StoneAlive, eax, ebx
+	ret
+
+@@noCollision:
+	xor eax, eax
+	ret
+ENDP CheckCollisionStone
 
 PROC moveBall
 
-; TODO:
-
-; ; VOOR LATER: NIET VERGETEN OM BIJ ELKE BEWEGINGSRICHTING TE CHECKEN OF DE BALL EEN STONE RAAKT!!!
-
-;	decrement het aantal levens van de bal en check of het aantal levens = 0
-	; => zo ja, het spel is gedaan (zorg ervoor dat men dit weet a.d.h.v. een return-waarde van moveBall zodat men weet dat de game-loop gedaan is)
-	; => zo nee, plaats de paddle en de ball weer op hun startpositie
 	ARG RETURNS eax
 	USES ebx, ecx, edx
-	xor eax, eax
 	mov ebx, offset ball_object
+	movzx ecx, [ebx + Ball.x]
+	movzx edx, [ebx + Ball.y]
 	cmp [ebx + Ball.x_sense], RIGHT
 	je SHORT @@handleMoveRight
 	
 @@handleMoveLeft:
-	cmp [ebx + Ball.x], 0
-	jg SHORT @@moveLeft
-	mov [ebx + Ball.x_sense], RIGHT
-	jmp SHORT @@handleMoveVertical
+	cmp ecx, 0
+	je SHORT @@leftToRight 
+	dec ecx ; simulatie van beweging naar links, zodat men controleert of er een overlapping zou zijn bij beweging, voordat men de beweging echt uitvoert
+	call CheckCollisionStone, ecx, edx
+	push eax ; resultaat van eerste call OP STACK plaatsen
+	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	pop ecx ; resultaat van eerste call VAN STACK halen
+	or eax, ecx
+	cmp eax, 0 ; bij het bewegen naar de aangegeven richting zou er botsing ontstaan 	;MISSCHIEN KAN DIT KORTER DOOR METEEN JZ TE GEBRUIKEN EN GEEN CMP
+	je SHORT @@moveLeft
+	call StonesAlive ; checken of er nog stenen overblijven, aangezien er minstens één werd vernietigd
+	cmp eax, 0
+	je SHORT @@leftToRight
+	ret
 @@moveLeft:
 	dec [ebx + Ball.x]
 	jmp SHORT @@handleMoveVertical
+@@leftToRight:
+	mov [ebx + Ball.x_sense], RIGHT
+	jmp SHORT @@handleMoveVertical
 
 @@handleMoveRight:
-	cmp [ebx + Ball.x], BOARDWIDTH-BALLWIDTHCELL
-	jl SHORT @@moveRight
-	mov [ebx + Ball.x_sense], LEFT
-	jmp SHORT @@handleMoveVertical
+	cmp ecx, BOARDWIDTH-BALLWIDTHCELL
+	je SHORT @@rightToLeft
+	inc ecx ; simulatie van beweging naar rechts
+	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	push eax
+	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	pop ecx
+	or eax, ecx
+	cmp eax, 0
+	je SHORT @@moveRight
+	call StonesAlive
+	cmp eax, 0
+	je SHORT @@rightToLeft
+	ret
 @@moveRight:
 	inc [ebx + Ball.x]
+	jmp SHORT @@handleMoveVertical
+@@rightToLeft:
+	mov [ebx + Ball.x_sense], LEFT
 
 @@handleMoveVertical:
+	movzx ecx, [ebx + Ball.x]
+	movzx edx, [ebx + Ball.y]
 	cmp [ebx + Ball.y_sense], UP
 	je SHORT @@handleMoveUp
 	jmp SHORT @@handleMoveDown
 	
-@@handleMoveUp:
-	cmp [ebx + Ball.y], 0
-	jg SHORT @@moveUp
-	mov [ebx + Ball.y_sense], DOWN
-	jmp SHORT @@end
+@@handleMoveUp: ; TOT HIER GEKOMEN
+	cmp edx, 0
+	je SHORT @@upToDown
+	dec edx ; simulatie van beweging naar boven
+	call CheckCollisionStone, ecx, edx
+	push eax
+	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	pop ecx
+	or eax, ecx
+	cmp eax, 0
+	je SHORT @@moveUp
+	call StonesAlive
+	cmp eax, 0
+	je SHORT @@upToDown
+	ret
 @@moveUp:
 	dec [ebx + Ball.y]
-	jmp SHORT @@end
+	jmp @@end
+@@upToDown:
+	mov [ebx + Ball.y_sense], DOWN
+	jmp @@end
 	
 @@handleMoveDown:
-	mov edx, offset paddle_object
 	cmp [ebx + Ball.y], PADDLESTARTY-BALLHEIGHTCELL
 	jg SHORT @@belowPaddle
-	jl SHORT @@moveDown
+	jl SHORT @@checkCollisionStone
+; collision met paddle checken
+	mov edx, offset paddle_object
 	movzx ecx, [edx + Paddle.x]
 	sub ecx, BALLWIDTHCELL 						; x-coördinaat van de ball met BALLWIDTHCELL verhogen is equivalent met de x-coördinaat van de paddle met BALLWIDTHCELL te verminderen
 	cmp [ebx + Ball.x], cl
@@ -284,19 +398,37 @@ PROC moveBall
 	add ecx, PADDLEWIDTHCELL
 	cmp [ebx + Ball.x], cl
 	jg SHORT @@moveDown								; er is geen botsing, de ball zit rechts van de paddle
-	mov [ebx + Ball.y_sense], UP
-	jmp SHORT @@end
+	jmp SHORT @@downToUp
+@@checkCollisionStone:
+	inc edx ; simulatie van beweging naar beneden
+	add edx, BALLHEIGHTCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	push eax
+	add ecx, BALLWIDTHCELL ; zie verantwoording tekening
+	call CheckCollisionStone, ecx, edx
+	pop ecx
+	or eax, ecx
+	cmp eax, 0
+	je SHORT @@moveDown
+	call StonesAlive
+	cmp eax, 0
+	je SHORT @@downToUp
+	ret
 @@moveDown:
 	inc [ebx + Ball.y]
 	jmp SHORT @@end
+@@downToUp:
+	mov [ebx + Ball.y_sense], UP
+	jmp SHORT @@end
 @@belowPaddle:
+	mov edx, offset paddle_object
 	cmp [ebx + Ball.y], BOARDHEIGHT-BALLHEIGHTCELL
 	jne @@moveDown
 	dec [edx + Paddle.lives]
 	cmp [edx + Paddle.lives], 0
-	jg @@newChance
+	jg SHORT @@newChance
 	mov eax, 1
-	jmp @@end
+	ret
 @@newChance:
 	mov [ebx + Ball.x], BALLSTARTX
 	mov [ebx + Ball.y], BALLSTARTY
@@ -305,6 +437,7 @@ PROC moveBall
 	mov [edx + Paddle.y], PADDLESTARTY
 	
 @@end:
+	xor eax, eax
 	ret
 ENDP moveBall
 
@@ -318,10 +451,10 @@ PROC gamelogistic
 	cmp [ebx + Ball.active], 0
 	je SHORT @@handle_input
 	and cl, 1
-	jnz @@handle_input								; zodat de bal minder snel beweegt (beweegt maar één op de twee keer)
+	jnz SHORT @@handle_input								; zodat de bal minder snel beweegt (beweegt maar één op de twee keer)
 	call moveBall									; bal beweegt enkel alleen als deze actief is (en de counter even is)
-	cmp eax, 1
-	je @@end
+	cmp eax, 0
+	jne SHORT @@end
 
 @@handle_input:
 	cmp [offset __keyb_keyboardState + 39h], 1		; spatiebalk ingedrukt? 
