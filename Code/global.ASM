@@ -44,7 +44,7 @@ CELLHEIGHT 	EQU 4	; celhoogte
 BOARDWIDTH 	EQU SCRWIDTH/CELLWIDTH ; spelbord breedte (in cellen)
 BOARDHEIGHT EQU SCRHEIGHT/CELLHEIGHT
 
-; NOG TE BESPREKEN
+; gebruikt bij het displayen van een message
 MESSAGEROW EQU 13
 MESSAGECOL EQU 15	
 

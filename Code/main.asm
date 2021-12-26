@@ -107,7 +107,7 @@ PROC StoneAlive
 	ret
 ENDP StoneAlive
 
-; Is er overlapping tussen de bal en minstens één steen?
+; Is er overlapping tussen de bal en één steen?
 ; We controleren eerst of de bal zich binnen de grote blok van stenen bevindt.
 ; Zo ja, dan controleren we of de steen op die plaats nog "levend" is of niet a.d.h.v. de procedure "StoneAlive"
 ; Zo nee, dan is er geen botsing mogelijk en wordt de waarde 0 in eax gestoken
@@ -410,11 +410,12 @@ PROC drawStones
 	pop ecx					; counter VAN STACK, aangezien de waarde van ecx ondertussen werd gewijzigd
 	push eax				; y-coördinaat OP STACK
 	push ecx				; counter terug OP STACK
+	; kleurindex = counter/COLSTONES*ROWSPERCOLOUR (kleurindex gebruikt om te beslissen welke sprite/kleur men gaat gebruiken voor het tekenen van de steen)
 	mov eax, ecx
 	mov ecx, COLSTONES*ROWSPERCOLOUR
-	; (offset_eerste_sprite + kleur_index * grootte_sprite)
 	xor edx, edx
-	div ecx							; quotiënt in eax
+	div ecx					; kleurindex in eax
+	; (offset_eerste_sprite + kleur_index * grootte_sprite)
 	mov ebx, offset bstone_array	; offset eerste sprite in geheugen
 	mov ecx, STONESIZEPX
 	mul ecx
